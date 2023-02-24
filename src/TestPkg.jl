@@ -1,11 +1,40 @@
-# module HybridVehicle #let's test with making a module...
-
 module TestPkg
 
+
+using LinearAlgebra
+using DataStructures
+using Graphs
+using JLD2
+using Compose
+using GLM
+using ProgressMeter
+using DataFrames
+using SparseArrays
+using DataStructures
+using JLD2
+using Gadfly
+using Cairo
+using Compose
+using GraphPlot
+import Statistics.mean
+using Colors 
+using Interpolations
+using JuMP
+using CPLEX
+using Ipopt 
+using DifferentialEquations
+using Interpolations        
+
+
+include("struct_defs.jl")
 include("label_label_sel.jl")
 include("label_node_sel.jl")
+include("MILP_definition3D.jl")
+
+
 export hybrid_label_selection
 export hybrid_node_selection
+export MILP_hybrid
 export EucGraphInt
 
 export get_path
@@ -53,44 +82,8 @@ export OptControlProb
 export OptControlSolution
 export MILP_to_opt_ctrl
 
-
-
-
-
-
-import LinearAlgebra.norm
-using DataStructures
-using Graphs
-using JLD2
-using Compose
-using GLM
-using ProgressMeter
-using DataFrames
-using SparseArrays
-using DataStructures
-using JLD2
-using Gadfly
-using Cairo
-using Compose
-using GraphPlot
-using Statistics
-using Colors 
-using Interpolations
-using JuMP
-using CPLEX
-import Ipopt 
-import DifferentialEquations
-using Interpolations        
-
-
-
 #should put these in separate files.... and maybe using's? 
-# this file can just be 
-#include()......
-#and
-#export
 
-# 1) Data Structs
 # 2) Labeling Utils
 # 3) Labeling funcs (from labeling.jl)
 # 4) Plotting Functions
@@ -98,137 +91,8 @@ using Interpolations
 # 6) MILP Functions
 # 7) Optimal Control utils
 # 7) Merge Algo and Utils
-
 # 7) Merge testing....
-###########################################
-## 1: Data Structs
-struct ProblemDef
-    S::Int64
-    E::Int64
-    Alist::Vector{Vector{Any}}
-    A::Array{Float64}
-    C::Array{Float64}
-    G::Array{Float64}
-    Z::Array{Float64}
-    B0::Float64
-    Q0::Float64
-    anchor_list::Array{Float64}
-    Dim::Vector{Float64}
-end
 
-struct MapDef
-    Alist::Vector{Vector{Any}}
-    A::Array{Float64}
-    C::Array{Float64}
-    G::Array{Float64}
-    Z::Array{Float64}
-    anchor_list::Vector{Float64}
-    Dim::Vector{Float64} #[n.m]
-    nN::Int64 #number of houses (total N - n*m + nN)
-    GPS_locs::Array{Float64}
-    void_list::Vector{Float64}
-end
-
-struct MapProb
-    S::Int64
-    E::Int64
-    B0::Int64
-    Q0::Int64
-    Bmax::Float64
-end
-
-
-
-# 3D Structs
-#Define label:
-#(C, B, G, i, k, F, GenOnPrior)
-#In heap:
-#(F, [C, B, G, i, k, F, GenOnPrior])
-
-struct GridProb
-    S::Int64
-    E::Int64
-    GFlipped::SparseMatrixCSC{Bool, Int64}
-    B0::Float64
-    Q0::Float64
-    Bmax::Float64
-    StartCost::Float64
-    anchor_list::SparseVector{Float64,Int64}
-    Dim::Vector{Float64}
-end
-
-struct GraphDef3D
-    Alist::Vector{Vector{Any}}
-    A::SparseMatrixCSC{Float64, Int64}
-    F::SparseMatrixCSC{Float64, Int64}
-    C::SparseMatrixCSC{Float64, Int64}
-    Z::SparseMatrixCSC{Float64, Int64}
-end
-struct FullDef3D
-    S::Int64
-    E::Int64
-    Alist::Vector{Vector{Any}}
-    A::Array{Float64}
-    F::Array{Float64}
-    C::Array{Float64}
-    G::Array{Bool}
-    Z::Array{Float64}
-    B0::Float64
-    Q0::Float64
-    Bmax::Float64
-    StartCost::Float64
-    anchor_list::Array{Float64}
-    Dim::Vector{Float64}
-end
-struct MapDef3D
-    Alist::Vector{Vector{Any}}
-    A::Array{Float64}
-    C::Array{Float64}
-    F::Array{Float64}
-    G::Array{Float64}
-    Z::Array{Float64}
-    anchor_list::Vector{Float64}
-    Dim::Vector{Float64} #[n.m]
-    nN::Int64 #number of "houses" (total N - n*m + nN)
-    GPS_locs::Array{Float64}
-    void_list::Vector{Float64}
-end
-struct EucGraph
-    S::Int64
-    E::Int64
-    Alist::Vector{Vector{Any}}
-    F::SparseMatrixCSC{Bool, Int64}
-    C::SparseMatrixCSC{Float64, Int64}
-    GFlipped::SparseMatrixCSC{Bool, Int64}
-    Z::SparseMatrixCSC{Float64, Int64}
-    B0::Float64
-    Q0::Float64
-    Bmax::Float64
-    StartCost::Float64
-    anchor_list::SparseVector{Int64}
-    locs::Matrix{Float64}
-end
-struct EucGraphInt
-    S::Int64
-    E::Int64
-    Alist::Vector{Vector{Any}}
-    F::SparseMatrixCSC{Bool, Int64}
-    C::SparseMatrixCSC{Int64}
-    GFlipped::SparseMatrixCSC{Bool, Int64}
-    Z::SparseMatrixCSC{Int64}
-    B0::Int64
-    Q0::Int64
-    Bmax::Int64
-    StartCost::Int64
-    anchor_list::SparseVector{Int64}
-    locs::Matrix{Float64} #leave this as float... need to deal with herustic cost.... can just round down?
-end
-struct Battery{N<:AbstractFloat, F<:Function}
-    R::N
-    Cmax::N
-    C::N
-    OCV::F
-end
 
 
 ###########################################
@@ -270,7 +134,11 @@ end
 
 
 
-function get_heur_astar(E, locs, Fvec)
+
+
+
+
+function get_heur_astar(E, locs, Fvec::Vector{Float64})
     function heur_astar(i)
         if isnan(Fvec[i])
             f = norm(locs[i,:] - locs[E,:])
@@ -281,8 +149,20 @@ function get_heur_astar(E, locs, Fvec)
     end
     return heur_astar 
 end
+function get_heur_astar(E, locs, Fvec::Vector{Int64})
+    function heur_astar(i)
+        if isnan(Fvec[i]) || Fvec[i] == 2^63 - 1
+            f = Int(floor(norm(locs[i,:] - locs[E,:])))
+        else
+            f = Fvec[i]
+        end
+        return f
+    end
+    return heur_astar 
+end
 
-function get_heur_label(Fvec, graph, C, E, heur_astar)
+
+function get_heur_label(Fvec::Vector{Float64}, graph, C, E, heur_astar)
     
     function heur_label!(i)
         #if needed, run astar.  then, add all nodes in path to Fvec. return only f cost for this label, while altering all of Fvec
@@ -302,8 +182,30 @@ function get_heur_label(Fvec, graph, C, E, heur_astar)
     
     return heur_label!
 end
+function get_heur_label(Fvec::Vector{Int64}, graph, C::SparseMatrixCSC{Int64, Int64}, E, heur_astar) #def if discrete version
+    function heur_label!(i)
+        #if needed, run astar.  then, add all nodes in path to Fvec. return only f cost for this label, while altering all of Fvec
+        if Fvec[i] == 	2^63 - 1
+            astar_out = a_star(graph, i, E, C, heur_astar)
+            if isempty(astar_out)
+                path_list = [i] 
+                printstyled("No path to goal!! \n", color=:light_red)
+                LB_vec = [	2^63 - 1]
+            else
+                path_list, LB_vec, cost = astar_proc(astar_out, C)
+            end
+            LB_vec = Int.(LB_vec)
+            add_to_Fvec!(LB_vec, path_list, Fvec)
+        end
+        return Fvec[i]
+    end
+    
+    return heur_label!
+end
 
-function get_heur_label_euc(Fvec, locs, E)
+
+
+function get_heur_label_euc(Fvec::Vector{Float64}, locs, E)
     function heur_label!(i)
         if isnan(Fvec[i])
             heur = norm(locs[i,:] - locs[E,:]) 
@@ -313,12 +215,35 @@ function get_heur_label_euc(Fvec, locs, E)
     end
     return heur_label!
 end
+function get_heur_label_euc(Fvec::Vector{Int64}, locs, E) #def if we're using euc distance
+    function heur_label!(i)
+        if Fvec[i] == 2^63 - 1
+            heur = Int(floor(norm(locs[i,:] - locs[E,:]))) 
+            Fvec[i] = heur
+        end
+        return Fvec[i]
+    end
+    return heur_label!
+end
+
+
+
 function add_to_Fvec!(LB_vec, path, Fvec)
     for idx in 1:length(path)
         i = path[idx]
         Fvec[i] = LB_vec[idx]
     end
 end
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -618,93 +543,6 @@ function hybrid_with_LB_depth(def::EucGraph)
     out_gen =   Y[K]
     return out_cost, out_path, out_gen, length(X), look_stack, dist_stack
     
-end
-
-
-###########################################
-## 3: Label functions from labeling.jl files
-function get_heur_astar(E, locs, Fvec)
-    function heur_astar(i)
-        if isnan(Fvec[i]) || Fvec[i] == 2^63 - 1
-            f = Int(floor(norm(locs[i,:] - locs[E,:])))
-        else
-            f = Fvec[i]
-        end
-        return f
-    end
-    return heur_astar 
-end
-
-function get_heur_label(Fvec, graph, C::SparseMatrixCSC{Int64, Int64}, E, heur_astar) #def if discrete version
-    function heur_label!(i)
-        #if needed, run astar.  then, add all nodes in path to Fvec. return only f cost for this label, while altering all of Fvec
-        if Fvec[i] == 	2^63 - 1
-            astar_out = a_star(graph, i, E, C, heur_astar)
-            if isempty(astar_out)
-                path_list = [i] 
-                printstyled("No path to goal!! \n", color=:light_red)
-                LB_vec = [	2^63 - 1]
-            else
-                path_list, LB_vec, cost = astar_proc(astar_out, C)
-            end
-            LB_vec = Int.(LB_vec)
-            add_to_Fvec!(LB_vec, path_list, Fvec)
-        end
-        return Fvec[i]
-    end
-    
-    return heur_label!
-end
-
-function get_heur_label_euc_disc(Fvec, locs, E) #def if we're using euc distance
-    function heur_label!(i)
-        if Fvec[i] == 2^63 - 1
-            heur = Int(floor(norm(locs[i,:] - locs[E,:]))) 
-            Fvec[i] = heur
-        end
-        return Fvec[i]
-    end
-    return heur_label!
-end
-
-
-function get_heur_label(Fvec, graph, C, E, heur_astar) #definition if we are getting a star value
-    
-    function heur_label!(i)
-        #if needed, run astar.  then, add all nodes in path to Fvec. return only f cost for this label, while altering all of Fvec
-        if isnan(Fvec[i])
-            astar_out = a_star(graph, i, E, C, heur_astar)
-            if isempty(astar_out)
-                path_list = [i] 
-                printstyled("No path to goal!! \n", color=:light_red)
-                LB_vec = [Inf]
-            else
-                path_list, LB_vec, cost = astar_proc(astar_out, C)
-            end
-            add_to_Fvec!(LB_vec, path_list, Fvec)
-        end
-        return Fvec[i]
-    end
-    
-    return heur_label!
-end
-
-
-function get_heur_label_euc(Fvec, locs, E) #def if we're using euc distance
-    function heur_label!(i)
-        if isnan(Fvec[i])
-            heur = norm(locs[i,:] - locs[E,:]) 
-            Fvec[i] = heur
-        end
-        return Fvec[i]
-    end
-    return heur_label!
-end
-function add_to_Fvec!(LB_vec, path, Fvec)
-    for idx in 1:length(path)
-        i = path[idx]
-        Fvec[i] = LB_vec[idx]
-    end
 end
 
 
@@ -1387,77 +1225,6 @@ end
  end
 
 
-
- function lower_boundLP(def::EucGraph; tlim = 900)
-    S, E, Alist, F, C, GFlipped, Z = def.S, def.E, def.Alist, def.F, def.C, def.GFlipped, def.Z
-    Bstart, Qstart = def.B0, def.Q0
-    Bmax = Bstart
-    SC = 0*def.StartCost
-    G = .! GFlipped
-
-    Bstart = mean(nonzeros(def.C)) + maximum(def.C)
-    Qstart = 9999
-    Bmax = Bstart
-    N = length(Alist)
-    bigM = 99
-    m = Model(optimizer_with_attributes(CPLEX.Optimizer, "CPX_PARAM_SCRIND" => 1, "CPXPARAM_Emphasis_Memory" => 1, "CPXPARAM_WorkMem" => 12000, "CPX_PARAM_TILIM" => tlim, "CPX_PARAM_WORKDIR" => "C:\\Users\\Student\\CPLEX_WDIR"))
-    @variable(m, 1 >= x[i=1:N,j=1:N] >= 0) #  , Bin)
-    @variable(m, 1>= g[i=1:N,j=1:N] >= 0) # , Bin)
- 
-    @variable(m, Bmax >= b[i=1:N] >= 0)
-    @variable(m, Qstart >= q[i=1:N] >= 0)
-    @constraint(m, [i=1:N], x[i,i] == 0)
-    # @constraint(m, [i = 1:N, j = 1:N; A[i,j] == 0], x[i,j] == 0)
-    @constraint(m, [i = 1:N, j = 1:N; G[i,j] == 0], g[i,j] == 0)
- 
-    @constraint(m, sum(x[S,j] for j=1:N) == 1)
-    @constraint(m, sum(x[j,E] for j=1:N) == 1)
- 
-    @constraint(m, sum(x[j,S] for j=1:N) == 0)
-    @constraint(m, sum(x[E,j] for j=1:N) == 0)
- 
-    @constraint(m, [i = setdiff(1:N, [S,E])], sum(x[i,j] for j=1:N)-sum(x[j,i] for j=1:N) == 0)
- 
- 
-    @constraint(m, b[S] == Bstart)
-    @constraint(m, [i = 1:N, j = 1:N],  b[j] <=  b[i] - C[i,j] + C[i,j]*F[i,j] + Z[i,j]*g[i,j]
-    - SC*(1 - sum(g[k,i] for k = setdiff(1:N, j))) + bigM*(1-x[i,j]))
- 
-    # @constraint(m, [i = 1:N, j = 1:N], b[j] <=  b[i] - C[i,j] + C[i,j]*F[i,j] + Z[i,j]*g[i,j] + bigM*(1-x[i,j]))
- 
-    @constraint(m, q[S] == Qstart)
-    @constraint(m, [i = 1:N, j = 1:N], q[j] <=  q[i] - Z[i,j]*g[i,j] + bigM*(1-x[i,j]))
- 
-    @constraint(m, [i=1:N, j = 1:N], g[i,j] <= x[i,j])
-    @constraint(m, [i=1:N, j = 1:N], g[i,j] <= G[i,j])
- 
- 
-    # @objective(m, Min, sum(x[i,j]*C[i,j] for  i=1:N, j=1:N) + sum(g[i,j]*(0.1*C[i,j]) for  i=1:N, j=1:N))
-    @objective(m, Min, sum(x[i,j]*C[i,j] for  i=1:N, j=1:N) )
- 
-    #add constraints such that xij = 0 for all edges that don't exist
-    for i = 1:N
-        for j = 1:N
-            if j ∉ Alist[i] == 0
-                @constraint(m, x[i,j] == 0)
-                @constraint(m, g[i,j] == 0)
-            end
- 
-        end
-    end
- 
- 
-    optimize!(m)
-    #  xsol = value.(x)
-    #  gsol = value.(g)
-    #  bstate = value.(b)
-    #  qstate = value.(q)
- 
-    time = solve_time(m)
-    cost = objective_value(m)
-    # path, gen = IP_to_vec(xsol, gsol, S, E)
-    return time, cost#, path, gen
- end
 
  function lower_boundLP(def::EucGraph; tlim = 900)
     S, E, Alist, F, C, GFlipped, Z = def.S, def.E, def.Alist, def.F, def.C, def.GFlipped, def.Z
