@@ -1,7 +1,7 @@
 module TestPkg
 
 
-import LinearAlgebra.norm
+using LinearAlgebra
 using DataStructures
 using Graphs
 using JLD2
@@ -29,10 +29,12 @@ using Interpolations
 include("struct_defs.jl")
 include("label_label_sel.jl")
 include("label_node_sel.jl")
+include("MILP_definition3D.jl")
 
 
 export hybrid_label_selection
 export hybrid_node_selection
+export MILP_hybrid
 export EucGraphInt
 
 export get_path
