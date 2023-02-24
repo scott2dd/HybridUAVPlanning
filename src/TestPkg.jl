@@ -26,9 +26,6 @@ using DifferentialEquations
 using Interpolations        
 
 
-
-
-
 include("struct_defs.jl")
 include("label_label_sel.jl")
 include("label_node_sel.jl")
