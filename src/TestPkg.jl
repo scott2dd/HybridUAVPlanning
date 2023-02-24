@@ -1,8 +1,35 @@
-# module HybridVehicle #let's test with making a module...
-
 module TestPkg
 
-incude("structs_def.jl")
+
+import LinearAlgebra.norm
+using DataStructures
+using Graphs
+using JLD2
+using Compose
+using GLM
+using ProgressMeter
+using DataFrames
+using SparseArrays
+using DataStructures
+using JLD2
+using Gadfly
+using Cairo
+using Compose
+using GraphPlot
+import Statistics.mean
+using Colors 
+using Interpolations
+using JuMP
+using CPLEX
+using Ipopt 
+using DifferentialEquations
+using Interpolations        
+
+
+
+
+
+include("struct_defs.jl")
 include("label_label_sel.jl")
 include("label_node_sel.jl")
 
@@ -56,38 +83,7 @@ export OptControlProb
 export OptControlSolution
 export MILP_to_opt_ctrl
 
-
-import LinearAlgebra.norm
-using DataStructures
-using Graphs
-using JLD2
-using Compose
-using GLM
-using ProgressMeter
-using DataFrames
-using SparseArrays
-using DataStructures
-using JLD2
-using Gadfly
-using Cairo
-using Compose
-using GraphPlot
-import Statistics.mean
-using Colors 
-using Interpolations
-using JuMP
-using CPLEX
-using Ipopt 
-using DifferentialEquations
-using Interpolations        
-
-
-
 #should put these in separate files.... and maybe using's? 
-# this file can just be 
-#include()......
-#and
-#export
 
 # 2) Labeling Utils
 # 3) Labeling funcs (from labeling.jl)

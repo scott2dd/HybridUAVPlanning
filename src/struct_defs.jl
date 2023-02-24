@@ -46,7 +46,7 @@ end
 struct GridProb
     S::Int64
     E::Int64
-    GFlipped::SparseMatrixCSC{Bool, Int64}
+    GFlipped::SparseMatrixs{Bool, Int64}
     B0::Float64
     Q0::Float64
     Bmax::Float64
