@@ -1,5 +1,5 @@
 using JuMP
-using CPLEX
+# using CPLEX
 
 
 function get_A(Alist)

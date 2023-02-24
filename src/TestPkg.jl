@@ -20,7 +20,7 @@ import Statistics.mean
 using Colors 
 using Interpolations
 using JuMP
-using CPLEX
+# using CPLEX
 using Ipopt 
 using DifferentialEquations
 using Interpolations        
@@ -29,7 +29,7 @@ using Interpolations
 include("struct_defs.jl")
 include("label_label_sel.jl")
 include("label_node_sel.jl")
-include("MILP_definition3D.jl")
+# include("MILP_definition3D.jl")
 
 
 export hybrid_label_selection
