@@ -132,7 +132,11 @@ end
 
 
 
-function get_heur_astar(E, locs, Fvec)
+
+
+
+
+function get_heur_astar(E, locs, Fvec::Vector{Float64})
     function heur_astar(i)
         if isnan(Fvec[i])
             f = norm(locs[i,:] - locs[E,:])
@@ -143,8 +147,20 @@ function get_heur_astar(E, locs, Fvec)
     end
     return heur_astar 
 end
+function get_heur_astar(E, locs, Fvec::Vector{Int64})
+    function heur_astar(i)
+        if isnan(Fvec[i]) || Fvec[i] == 2^63 - 1
+            f = Int(floor(norm(locs[i,:] - locs[E,:])))
+        else
+            f = Fvec[i]
+        end
+        return f
+    end
+    return heur_astar 
+end
 
-function get_heur_label(Fvec, graph, C, E, heur_astar)
+
+function get_heur_label(Fvec::Vector{Float64}, graph, C, E, heur_astar)
     
     function heur_label!(i)
         #if needed, run astar.  then, add all nodes in path to Fvec. return only f cost for this label, while altering all of Fvec
@@ -164,8 +180,30 @@ function get_heur_label(Fvec, graph, C, E, heur_astar)
     
     return heur_label!
 end
+function get_heur_label(Fvec::Vector{Int64}, graph, C::SparseMatrixCSC{Int64, Int64}, E, heur_astar) #def if discrete version
+    function heur_label!(i)
+        #if needed, run astar.  then, add all nodes in path to Fvec. return only f cost for this label, while altering all of Fvec
+        if Fvec[i] == 	2^63 - 1
+            astar_out = a_star(graph, i, E, C, heur_astar)
+            if isempty(astar_out)
+                path_list = [i] 
+                printstyled("No path to goal!! \n", color=:light_red)
+                LB_vec = [	2^63 - 1]
+            else
+                path_list, LB_vec, cost = astar_proc(astar_out, C)
+            end
+            LB_vec = Int.(LB_vec)
+            add_to_Fvec!(LB_vec, path_list, Fvec)
+        end
+        return Fvec[i]
+    end
+    
+    return heur_label!
+end
 
-function get_heur_label_euc(Fvec, locs, E)
+
+
+function get_heur_label_euc(Fvec::Vector{Float64}, locs, E)
     function heur_label!(i)
         if isnan(Fvec[i])
             heur = norm(locs[i,:] - locs[E,:]) 
@@ -175,12 +213,35 @@ function get_heur_label_euc(Fvec, locs, E)
     end
     return heur_label!
 end
+function get_heur_label_euc(Fvec::Vector{Int64}, locs, E) #def if we're using euc distance
+    function heur_label!(i)
+        if Fvec[i] == 2^63 - 1
+            heur = Int(floor(norm(locs[i,:] - locs[E,:]))) 
+            Fvec[i] = heur
+        end
+        return Fvec[i]
+    end
+    return heur_label!
+end
+
+
+
 function add_to_Fvec!(LB_vec, path, Fvec)
     for idx in 1:length(path)
         i = path[idx]
         Fvec[i] = LB_vec[idx]
     end
 end
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -480,93 +541,6 @@ function hybrid_with_LB_depth(def::EucGraph)
     out_gen =   Y[K]
     return out_cost, out_path, out_gen, length(X), look_stack, dist_stack
     
-end
-
-
-###########################################
-## 3: Label functions from labeling.jl files
-function get_heur_astar(E, locs, Fvec)
-    function heur_astar(i)
-        if isnan(Fvec[i]) || Fvec[i] == 2^63 - 1
-            f = Int(floor(norm(locs[i,:] - locs[E,:])))
-        else
-            f = Fvec[i]
-        end
-        return f
-    end
-    return heur_astar 
-end
-
-function get_heur_label(Fvec, graph, C::SparseMatrixCSC{Int64, Int64}, E, heur_astar) #def if discrete version
-    function heur_label!(i)
-        #if needed, run astar.  then, add all nodes in path to Fvec. return only f cost for this label, while altering all of Fvec
-        if Fvec[i] == 	2^63 - 1
-            astar_out = a_star(graph, i, E, C, heur_astar)
-            if isempty(astar_out)
-                path_list = [i] 
-                printstyled("No path to goal!! \n", color=:light_red)
-                LB_vec = [	2^63 - 1]
-            else
-                path_list, LB_vec, cost = astar_proc(astar_out, C)
-            end
-            LB_vec = Int.(LB_vec)
-            add_to_Fvec!(LB_vec, path_list, Fvec)
-        end
-        return Fvec[i]
-    end
-    
-    return heur_label!
-end
-
-function get_heur_label_euc_disc(Fvec, locs, E) #def if we're using euc distance
-    function heur_label!(i)
-        if Fvec[i] == 2^63 - 1
-            heur = Int(floor(norm(locs[i,:] - locs[E,:]))) 
-            Fvec[i] = heur
-        end
-        return Fvec[i]
-    end
-    return heur_label!
-end
-
-
-function get_heur_label(Fvec, graph, C, E, heur_astar) #definition if we are getting a star value
-    
-    function heur_label!(i)
-        #if needed, run astar.  then, add all nodes in path to Fvec. return only f cost for this label, while altering all of Fvec
-        if isnan(Fvec[i])
-            astar_out = a_star(graph, i, E, C, heur_astar)
-            if isempty(astar_out)
-                path_list = [i] 
-                printstyled("No path to goal!! \n", color=:light_red)
-                LB_vec = [Inf]
-            else
-                path_list, LB_vec, cost = astar_proc(astar_out, C)
-            end
-            add_to_Fvec!(LB_vec, path_list, Fvec)
-        end
-        return Fvec[i]
-    end
-    
-    return heur_label!
-end
-
-
-function get_heur_label_euc(Fvec, locs, E) #def if we're using euc distance
-    function heur_label!(i)
-        if isnan(Fvec[i])
-            heur = norm(locs[i,:] - locs[E,:]) 
-            Fvec[i] = heur
-        end
-        return Fvec[i]
-    end
-    return heur_label!
-end
-function add_to_Fvec!(LB_vec, path, Fvec)
-    for idx in 1:length(path)
-        i = path[idx]
-        Fvec[i] = LB_vec[idx]
-    end
 end
 
 
@@ -1249,77 +1223,6 @@ end
  end
 
 
-
- function lower_boundLP(def::EucGraph; tlim = 900)
-    S, E, Alist, F, C, GFlipped, Z = def.S, def.E, def.Alist, def.F, def.C, def.GFlipped, def.Z
-    Bstart, Qstart = def.B0, def.Q0
-    Bmax = Bstart
-    SC = 0*def.StartCost
-    G = .! GFlipped
-
-    Bstart = mean(nonzeros(def.C)) + maximum(def.C)
-    Qstart = 9999
-    Bmax = Bstart
-    N = length(Alist)
-    bigM = 99
-    m = Model(optimizer_with_attributes(CPLEX.Optimizer, "CPX_PARAM_SCRIND" => 1, "CPXPARAM_Emphasis_Memory" => 1, "CPXPARAM_WorkMem" => 12000, "CPX_PARAM_TILIM" => tlim, "CPX_PARAM_WORKDIR" => "C:\\Users\\Student\\CPLEX_WDIR"))
-    @variable(m, 1 >= x[i=1:N,j=1:N] >= 0) #  , Bin)
-    @variable(m, 1>= g[i=1:N,j=1:N] >= 0) # , Bin)
- 
-    @variable(m, Bmax >= b[i=1:N] >= 0)
-    @variable(m, Qstart >= q[i=1:N] >= 0)
-    @constraint(m, [i=1:N], x[i,i] == 0)
-    # @constraint(m, [i = 1:N, j = 1:N; A[i,j] == 0], x[i,j] == 0)
-    @constraint(m, [i = 1:N, j = 1:N; G[i,j] == 0], g[i,j] == 0)
- 
-    @constraint(m, sum(x[S,j] for j=1:N) == 1)
-    @constraint(m, sum(x[j,E] for j=1:N) == 1)
- 
-    @constraint(m, sum(x[j,S] for j=1:N) == 0)
-    @constraint(m, sum(x[E,j] for j=1:N) == 0)
- 
-    @constraint(m, [i = setdiff(1:N, [S,E])], sum(x[i,j] for j=1:N)-sum(x[j,i] for j=1:N) == 0)
- 
- 
-    @constraint(m, b[S] == Bstart)
-    @constraint(m, [i = 1:N, j = 1:N],  b[j] <=  b[i] - C[i,j] + C[i,j]*F[i,j] + Z[i,j]*g[i,j]
-    - SC*(1 - sum(g[k,i] for k = setdiff(1:N, j))) + bigM*(1-x[i,j]))
- 
-    # @constraint(m, [i = 1:N, j = 1:N], b[j] <=  b[i] - C[i,j] + C[i,j]*F[i,j] + Z[i,j]*g[i,j] + bigM*(1-x[i,j]))
- 
-    @constraint(m, q[S] == Qstart)
-    @constraint(m, [i = 1:N, j = 1:N], q[j] <=  q[i] - Z[i,j]*g[i,j] + bigM*(1-x[i,j]))
- 
-    @constraint(m, [i=1:N, j = 1:N], g[i,j] <= x[i,j])
-    @constraint(m, [i=1:N, j = 1:N], g[i,j] <= G[i,j])
- 
- 
-    # @objective(m, Min, sum(x[i,j]*C[i,j] for  i=1:N, j=1:N) + sum(g[i,j]*(0.1*C[i,j]) for  i=1:N, j=1:N))
-    @objective(m, Min, sum(x[i,j]*C[i,j] for  i=1:N, j=1:N) )
- 
-    #add constraints such that xij = 0 for all edges that don't exist
-    for i = 1:N
-        for j = 1:N
-            if j ∉ Alist[i] == 0
-                @constraint(m, x[i,j] == 0)
-                @constraint(m, g[i,j] == 0)
-            end
- 
-        end
-    end
- 
- 
-    optimize!(m)
-    #  xsol = value.(x)
-    #  gsol = value.(g)
-    #  bstate = value.(b)
-    #  qstate = value.(q)
- 
-    time = solve_time(m)
-    cost = objective_value(m)
-    # path, gen = IP_to_vec(xsol, gsol, S, E)
-    return time, cost#, path, gen
- end
 
  function lower_boundLP(def::EucGraph; tlim = 900)
     S, E, Alist, F, C, GFlipped, Z = def.S, def.E, def.Alist, def.F, def.C, def.GFlipped, def.Z
