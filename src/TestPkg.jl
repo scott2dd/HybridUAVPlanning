@@ -1808,7 +1808,7 @@ end
 
 precompile(hybrid_label_selection)
 precompile(hybrid_node_selection)
-precompile()
+precompile(MILP_to_opt_ctrl)
 
 
 #-------END OF MODULE---------------
