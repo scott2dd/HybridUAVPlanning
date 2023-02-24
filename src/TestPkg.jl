@@ -32,6 +32,7 @@ include("label_node_sel.jl")
 # include("MILP_definition3D.jl")
 
 
+
 export hybrid_label_selection
 export hybrid_node_selection
 export MILP_hybrid
@@ -1402,7 +1403,7 @@ function ezDynamics!(dx,x,p,t)
         dx[2] = D_Y_coord
     end
 
-function MILP_to_opt_ctrl(N, k; prob = "euc_probs2D", algo = "_label", conn = "", heur = "")
+function MILP_to_opt_ctrl(N::Int64, k::Int64; prob::String = "euc_probs2D", algo::String = "_label", conn::String = "", heur::String = "")
     @load "Solutions\\$(prob)\\$(N)$(conn)_$(k)$(algo)$(heur)" pathL gen
     @load "Problems\\$(prob)\\$(N)$(conn)_$(k)" euc_inst
     C,Z = euc_inst.C, euc_inst.Z
@@ -1805,6 +1806,9 @@ function merge_3D(X::Vector{Vector{Int64}}, Y::Vector{Vector{Int64}}) #O(N^2 / 2
 end
 
 
+precompile(hybrid_label_selection)
+precompile(hybrid_node_selection)
+precompile()
 
 
 #-------END OF MODULE---------------
