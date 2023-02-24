@@ -2,21 +2,26 @@
 
 module TestPkg
 
-include("")
+include("label_label_sel.jl")
+include("label_node_sel.jl")
+export hybrid_label_selection
+export hybrid_node_selection
 export EucGraphInt
 
 export get_path
 export get_gen
-export get_heur_astar
-export manhattan
-export get_heur_label
 
-export euc_dist
-export euc_dist3D
-export euc_dist_eucgraph
-export get_heur_label
-export get_heur_label_euc
-export get_heur_label_euc_disc
+
+# export get_heur_astar
+# export manhattan
+# export get_heur_label
+
+# export euc_dist
+# export euc_dist3D
+# export euc_dist_eucgraph
+# export get_heur_label
+# export get_heur_label_euc
+# export get_heur_label_euc_disc
 
 export plot_euc_graph
 export plot_euc_graph_labeled
@@ -39,14 +44,19 @@ export simps
 #add comment
 
 
-export  merge_3D
-export EFF_list
-export EFF_heap 
-export EFF_P
+# export  merge_3D
+# export EFF_list
+# export EFF_heap 
+# export EFF_P
 
 export OptControlProb
 export OptControlSolution
 export MILP_to_opt_ctrl
+
+
+
+
+
 
 import LinearAlgebra.norm
 using DataStructures
@@ -55,6 +65,30 @@ using JLD2
 using Compose
 using GLM
 using ProgressMeter
+using DataFrames
+using SparseArrays
+using DataStructures
+using JLD2
+using Gadfly
+using Cairo
+using Compose
+using GraphPlot
+using Statistics
+using Colors 
+using Interpolations
+using JuMP
+using CPLEX
+import Ipopt 
+import DifferentialEquations
+using Interpolations        
+
+
+
+#should put these in separate files.... and maybe using's? 
+# this file can just be 
+#include()......
+#and
+#export
 
 # 1) Data Structs
 # 2) Labeling Utils
@@ -68,7 +102,6 @@ using ProgressMeter
 # 7) Merge testing....
 ###########################################
 ## 1: Data Structs
-using DataFrames
 struct ProblemDef
     S::Int64
     E::Int64
@@ -111,7 +144,7 @@ end
 #(C, B, G, i, k, F, GenOnPrior)
 #In heap:
 #(F, [C, B, G, i, k, F, GenOnPrior])
-using SparseArrays
+
 struct GridProb
     S::Int64
     E::Int64
@@ -287,7 +320,7 @@ function add_to_Fvec!(LB_vec, path, Fvec)
     end
 end
 
-using DataStructures
+
 
 function EFF_heap(Q::MutableBinaryMinHeap, label_new::Vector{T}) where T<:Number 
     isempty(Q) && (return true)
@@ -313,8 +346,6 @@ function EFF_P(P::Vector{Matrix{T}}, label_new::Vector{T}) where T<:Number
     return true
 end
     #
-using JLD2
-import Statistics.mean
 function load_full_def(Dim, k)
     xx, yy, zz = Dim[1], Dim[2], Dim[3]
     @load "Problems\\grid_probs3D\\$(xx)x$(yy)x$(zz)_$(k)" prob
@@ -680,11 +711,6 @@ end
 
 ###########################################
 ## 4: Plotting Functions 
-using Gadfly
-using Colors
-using Graphs
-using GraphPlot
-import Cairo
 function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     #make Graph() then just graph plot
     set_default_plot_size(20cm, 20cm)
@@ -1008,7 +1034,7 @@ end
 ############################################# 
 ## 5: Battery...
 # raw data from Fitting the OCV-SOC relationship of a battery lithium-ion using genetic algorithm method
-using Interpolations
+
 function get_OCV_func()
     SOC=100 .*[1,0.9503,0.9007,0.8510,0.8013,0.7517,0.7020,0.6524,0.6027,0.5530,0.5034,0.4537,0.4040,0.3543,0.3046,0.2550,0.2053,0.1556,0.1059,0.0563];
     OCV=[4.1617,4.0913,4.0749,4.0606,4.0153,3.9592,3.9164,3.8687,3.8163,3.7735,3.7317,3.6892,3.6396,3.5677,3.5208,3.4712,3.3860,3.2880,3.2037,3.0747];
@@ -1236,7 +1262,7 @@ end
 ###########################################
 ## 6: MILP Functions 
 #trying edge notation... not possible to add fuel constraints....
-using JuMP
+
 function MILP_edge_notation(def::FullDef3D; tlim = 900)
     S, E, A, Alist, F, C, G, Z = def.S, def.E, def.A, def.Alist, def.F, def.C, def.G, def.Z
     Bstart, Qstart = def.B0, def.Q0
@@ -1361,7 +1387,7 @@ end
  end
 
 
-using CPLEX
+
  function lower_boundLP(def::EucGraph; tlim = 900)
     S, E, Alist, F, C, GFlipped, Z = def.S, def.E, def.Alist, def.F, def.C, def.GFlipped, def.Z
     Bstart, Qstart = def.B0, def.Q0
@@ -1541,10 +1567,6 @@ end
 
 ###########################################
 ##  7: optimal control utils
-using JuMP   
-import Ipopt 
-import DifferentialEquations
-using Interpolations        
 
 struct OptControlProb
     locs::Matrix{Float64}
