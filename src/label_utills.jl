@@ -135,13 +135,6 @@ end
 
 
 
-
-
-
-
-
-
-
 function EFF_heap(Q::MutableBinaryMinHeap, label_new::Vector{T}) where T<:Number 
     isempty(Q) && (return true)
     node_map_copy = Q.node_map
