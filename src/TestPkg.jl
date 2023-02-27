@@ -87,6 +87,7 @@ export OptControlProb
 export OptControlSolution
 export MILP_to_opt_ctrl
 export get_tag
+export solve_gen_optimal_control
 
 #do precompiles later? This gives an error when doing auto-Julia-Pkg.jl precompilation.....
 # precompile(hybrid_label_selection)
