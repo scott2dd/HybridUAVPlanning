@@ -102,7 +102,7 @@ end
 
 function get_tag(N::Int64, k::Int64; prob::String = "euc_probs2D", algo::String = "_label", conn::String = "", heur::String = "", with_path::Bool = false)
     if with_path
-        return "Solutions\\$(N)$(conn)_$(k)$(algo)$(heur)"
+        return "Solutions\\OCP\\$(N)$(conn)_$(k)$(algo)$(heur)"
     else
         return "$(N)$(conn)_$(k)$(algo)$(heur)"
     end
