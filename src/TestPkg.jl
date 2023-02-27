@@ -25,6 +25,20 @@ using Ipopt
 using DifferentialEquations
 using Interpolations        
 
+#=
+workflow for this package:
+1) test new functions and data types in main project folder
+2) once tested, add here 
+3) "up TestPkg" in main project folder
+
+This is a julia package for "permanent" or well-tested and often-used functions in my project
+Exports as-needed (many old functions and structs in here that I don't use anymore, may use in future then export when needed)
+
+
+NOTE: CPLEX not installed in this package.  Dependencies would not work with old CPLEX.jl needed for IBMCPLEXv12.9
+Need to update machine CPLEX binaries, update julia CPLEX_BINARY_PATH, then add new CPLEX.jl (unpinned) and fix code to use new CPLEX 
+=#
+
 
 include("struct_defs.jl")
 include("label_label_sel.jl")
