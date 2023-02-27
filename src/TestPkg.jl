@@ -47,14 +47,7 @@ include("label_utills.jl")
 include("plotting.jl")
 include("battery.jl")
 include("opt_contrl.jl")
-
-
-precompile(hybrid_label_selection)
-precompile(hybrid_node_selection)
-precompile(MILP_to_opt_ctrl)
-precompile(plot_euc_graph)
-precompile(plot_hybrid_soln)
-# include("MILP_definition3D.jl")
+# include("MILP_definition3D.jl")  #later will update with correct CPLEX
 
 
 
@@ -95,6 +88,11 @@ export OptControlSolution
 export MILP_to_opt_ctrl
 
 
-
+#do precompiles later? This gives an error when doing auto-Julia-Pkg.jl precompilation.....
+# precompile(hybrid_label_selection)
+# precompile(hybrid_node_selection)
+# precompile(MILP_to_opt_ctrl)
+# precompile(plot_euc_graph)
+# precompile(plot_hybrid_soln)
 #-------END OF MODULE---------------
 end
