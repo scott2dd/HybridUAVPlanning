@@ -93,11 +93,15 @@ function MILP_to_opt_ctrl(N::Int64, k::Int64; prob::String = "euc_probs2D", algo
     F = euc_inst.F
     B0, Q0, Bmax = euc_inst.B0, euc_inst.Q0, euc_inst.Bmax
 
-    tag = "$(N)$(conn)_$(k)$(algo)$(heur)"
+    tag = get_tag(N,k, prob=prob, algo==algo, conn=conn, heur=heur)
     OCP =  OptControlProb(locs, C,Z,F, GFlipped, B0, Q0, Bmax, tag)
 
 
     return OCP, pathL, gen
+end
+
+function get_tag(N, k; prob::String = "euc_probs2D", algo::String = "_label", conn::String = "", heur::String = "")
+    return "$(N)$(conn)_$(k)$(algo)$(heur)"
 end
 
 
