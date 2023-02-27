@@ -100,7 +100,7 @@ function MILP_to_opt_ctrl(N::Int64, k::Int64; prob::String = "euc_probs2D", algo
     return OCP, pathL, gen
 end
 
-function get_tag(N, k; prob::String = "euc_probs2D", algo::String = "_label", conn::String = "", heur::String = "", with_path = false)
+function get_tag(N::Int64, k::Int64; prob::String = "euc_probs2D", algo::String = "_label", conn::String = "", heur::String = "", with_path::Bool = false)
     if with_path
         return "Solutions\\$(N)$(conn)_$(k)$(algo)$(heur)"
     else
