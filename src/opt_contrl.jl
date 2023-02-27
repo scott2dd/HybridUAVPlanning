@@ -16,8 +16,8 @@ struct OptControlSolution
     C::SparseMatrixCSC{Int64}
     Z::SparseMatrixCSC{Int64}
     F::SparseMatrixCSC{Bool, Int64}
-    path::Vector{Float64}
-    gen::Vector{Float64}
+    path::Vector{Int64} #this remains Int until we do OptControl on the trajectory as well...
+    gen::Vector{Float64} #needs to be float becuase the gen can be real number from 0 to 1
     timevec::Vector{Float64}
     batt_state::Vector{Float64}
     fuel_state::Vector{Float64}
