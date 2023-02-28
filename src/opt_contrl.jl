@@ -1,4 +1,4 @@
-
+#this comment was added on laptop.  Test to see if git pushing between machines is working!
 struct OptControlProb
     locs::Matrix{Float64}
     C::SparseMatrixCSC{Int64}
@@ -38,7 +38,6 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     #pull from OCP
     C,Z,GFlipped = OCP.C, OCP.Z, OCP.GFlipped
 
-
     g_min,g_max = 0, OCP.Q0     # Bounds on the States
     b_min, b_max = 0, OCP.Bmax  
     
@@ -73,8 +72,6 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
 
     time_to_solve = @elapsed JuMP.optimize!(myModel)    
     # solution_summary(myModel)       # Provide a summary of the solution
-    
-    
     
     # --- Store Solution from Optimal Control Search --- #
     u_star, b_star, g_star = value.(u)[:], value.(b)[:], value.(g)[:]     # Store off the Optimal Control
