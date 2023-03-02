@@ -98,7 +98,7 @@ function plot_euc_graph_solution(euc_inst::EucGraph; label_strings::Vector{Strin
     edge_labels = fill("", nE)
     if !isempty(path)
         edgelist = collect(edges(g))
-        edgemap = Dict{Edge, Int}()
+        edgemap = Dict{Edge, Int}()g
         for (i,e) in enumerate(edgelist)
             edgemap[e] = i
             edgemap[reverse(e)] = i
