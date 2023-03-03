@@ -3,8 +3,8 @@
 #magenta - generator on
 #grey    - generator off
 #lightcoral - noise restricted zone
-# yellow?          - fuel level 
-# darkbrown          - battery level (SOC)
+# green     - fuel level 
+# sienna    - battery level (SOC)
 
 function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     #make Graph() then just graph plot
