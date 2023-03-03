@@ -1,3 +1,11 @@
+## COLOR Guide
+
+#magenta - generator on
+#grey    - generator off
+#lightcoral - noise restricted zone
+# yellow?          - fuel level 
+# darkbrown          - battery level (SOC)
+
 function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     #make Graph() then just graph plot
     set_default_plot_size(20cm, 20cm)
