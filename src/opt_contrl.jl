@@ -26,7 +26,7 @@ struct OptControlSolution
     time_to_solve::Float64
 end
 
-function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen::Vector{Bool})
+function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen::Vector{Bool}; linear = true)
     myModel = Model(Ipopt.Optimizer)
     try register(myModel, :atan, 2, atan; autodiff = true) catch end# register atan as JuMP function 
     set_silent(myModel)
@@ -50,17 +50,55 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         u_min  ≤ u[1:N] ≤ u_max      # generator setting
     end)
 
-    fix(b[1], 1000*OCP.B0; force = true)  
+    fix(b[1], OCP.B0; force = true)  
     fix(g[1], OCP.Q0; force = true)  
     fix(u[1], 0;  force = true)  
 
     noiseR_along_path = [!OCP.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)]
     pushfirst!(noiseR_along_path, 0)
+    ṁ_normed(x) = (86u^2 + 8.3u + 0.083)*[Z_ij]/94.383 
     for timei in 2:N
         nodej = path[timei]
         nodei = path[timei-1]
-        @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])
-        @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
+        
+        if linear
+            @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
+            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])                #simple linear updates.....
+        else
+
+            # ṁ = .0086x^2 + 0.083x + 0.083 - x is [0,100]
+            #from http://dx.doi.org/10.1051/matecconf/201925206009
+            # ṁ = 86x^2 + 8.3x + 0.083      - x is [0.,1]
+            # ṁ for out problem: need to take this quadratic structure and map to our values....
+            # z_ij:  consume 32 units of fuel for 16 units of distance, assume constnat speed and this is at full throttle.....
+            # then we need to get quadratic mapping using above curve....
+            #ṁ = (86u^2 + 8.3u + 0.083)*[Z_ij]/94.383  - x is [0.,1], max fuel burn rate @ u = 1, 0 @quad interp between 
+            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej]*ṁ_normed(u))                
+            
+            #now need to make constraints for better battery model..... can reuse battery.jl work... just use riemman7 update func 
+            @variable(myModel, U[1:N]) #hysterisis term...
+            
+            
+            fix(U[1], 0, force = true)
+            Cmax = 9000
+            Req = 70/1000
+            C2 = 3000 
+            τ = R1*C2
+            OCV, min, max = get_OCV_func()
+            
+            Uk1 = exp(-Δ/τ)*Uk + Req*(1 - exp(-Δ/τ))*P/Vk
+            Vk1 = OCV(S) - Uk1
+            
+
+            #so we need to get net power, calculate Uk1 and Vk1, then get ΔSOC
+            S -= P/(Cmax*Vk1)*Δ*100
+            
+            @constraint(myModel, b[timei] == b[timei-1] - P/(Cmax*Vk1)*(timei)
+            
+            
+            C[nodei,nodej] + u[timei]*Z[nodei,nodej]*ṁ_normed(u)) #need to change u*Z*f(u) term.... how does battery charge change wrt to load? we can combine C and Z terms to map into net ΔSOC?
+        end
+        
         @constraint(myModel, u[timei] <= noiseR_along_path[timei]) #noise restrictions
     end
 

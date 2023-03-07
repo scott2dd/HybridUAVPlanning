@@ -1,3 +1,11 @@
+## COLOR Guide
+
+#magenta - generator on
+#grey    - generator off
+#lightcoral - noise restricted zone
+# green     - fuel level 
+# sienna    - battery level (SOC)
+
 function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     #make Graph() then just graph plot
     set_default_plot_size(20cm, 20cm)
@@ -98,7 +106,7 @@ function plot_euc_graph_solution(euc_inst::EucGraph; label_strings::Vector{Strin
     edge_labels = fill("", nE)
     if !isempty(path)
         edgelist = collect(edges(g))
-        edgemap = Dict{Edge, Int}()
+        edgemap = Dict{Edge, Int}()g
         for (i,e) in enumerate(edgelist)
             edgemap[e] = i
             edgemap[reverse(e)] = i
