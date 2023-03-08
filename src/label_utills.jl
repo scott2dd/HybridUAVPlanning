@@ -24,12 +24,12 @@ function get_gen(label::Vector{Int64}, gen_track::Vector{Vector{Vector{Int64}}})
     gt_idx = label[8]
     while PL > 1
         gen_now = gen_track[PL][gt_idx][1]
-        gt_idx = gen_track[PL][gt_idx][2]
         push!(genOut, gen_now)
+        gt_idx = gen_track[PL][gt_idx][2]
         
         PL -= 1
     end
-    return genOut
+    return reverse(genOut)
 end
 
 

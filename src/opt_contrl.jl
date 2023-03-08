@@ -93,10 +93,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
             #so we need to get net power, calculate Uk1 and Vk1, then get ΔSOC
             S -= P/(Cmax*Vk1)*Δ*100
             
-            @constraint(myModel, b[timei] == b[timei-1] - P/(Cmax*Vk1)*(timei)
-            
-            
-            C[nodei,nodej] + u[timei]*Z[nodei,nodej]*ṁ_normed(u)) #need to change u*Z*f(u) term.... how does battery charge change wrt to load? we can combine C and Z terms to map into net ΔSOC?
+            @constraint(myModel, b[timei] == b[timei-1] - P/(Cmax*Vk1)*(timei) + C[nodei,nodej] + u[timei]*Z[nodei,nodej]*ṁ_normed(u)) #need to change u*Z*f(u) term.... how does battery charge change wrt to load? we can combine C and Z terms to map into net ΔSOC?
         end
         
         @constraint(myModel, u[timei] <= noiseR_along_path[timei]) #noise restrictions
