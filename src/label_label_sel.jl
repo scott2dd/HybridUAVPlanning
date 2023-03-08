@@ -7,9 +7,6 @@
 # using ProgressMeter
 
 
-#Functions for getting heuristics MOVED TO utils.jl
-
-
 ##############################################
 function hybrid_label_selection(def::EucGraphInt; heur::String = "astar") 
     S, E, Alist, F, C, Z = def.S, def.E, def.Alist, def.F, def.C, def.Z
@@ -46,12 +43,9 @@ function hybrid_label_selection(def::EucGraphInt; heur::String = "astar")
         return 0,[0], Bool.([0])
     end
     
-    # Q = MutableBinaryMinHeap([   (heur_label!(S) + 0, [0, Bstart, Qstart, S, 1, heur_label!(S) + 0]) ] )
     Q = MutableBinaryMinHeap([   (heur_label!(S) + 0, [0, Bstart, Qstart, S,    S,1,    1,1,   heur_label!(S) + 0]) ] )
 
     P = [zeros(Int, 0,9) for k = 1:size(C,1)] #set of treated labels | new labels compare to this AND Q
-    # X = Vector{Int}[ [S] ]  #hold path info
-    # Y = Vector{Int}[  []   ] #hold gen info
 
     came_from = [Vector{Int64}[] for _ in 1:N]
     push!(came_from[S], [0, 1]) #S is start... so we just add a dummy entry to [S]
@@ -91,13 +85,11 @@ function hybrid_label_selection(def::EucGraphInt; heur::String = "astar")
                 label[4] = j
                 label[5] = i
                 label[6] = label_treated[6] #correct later
-                label[7] = label_treated[7] + 1 
+                label[7] = label_treated[7] + 1 #path length
                 label[8] = label_treated[8] #correct later
                 label[9] = 1 #gen bool, correct later
                 
                 
-                
-                # [gc + genpen, label_treated[2]-C[i,j]*(1-Fbin) + Z[i,j] - SC*(1-GenPrior), label_treated[3]-Z[i,j],  j, Int(length(X)+1), gc+h]
                 if EFF_heap(Q, label) && EFF_P(P, label)
                     #correct path...
                     path_pointer = findall(x-> x == [label[5], label[6]], came_from[j])
