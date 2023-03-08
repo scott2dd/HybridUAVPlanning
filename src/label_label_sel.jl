@@ -48,9 +48,9 @@ function hybrid_label_selection(def::EucGraphInt; heur::String = "astar")
     P = [zeros(Int, 0,9) for k = 1:size(C,1)] #set of treated labels | new labels compare to this AND Q
 
     came_from = [Vector{Int64}[] for _ in 1:N]
-    push!(came_from[S], [0, 1]) #S is start... so we just add a dummy entry to [S]
+    push!(came_from[S], [0, 9999]) #S is start... so we just add a dummy entry to [S]
     gen_track = [Vector{Int64}[] for _ in 1:N]  #data struct to track genertor patterns 
-    z=0
+    z=0  #will not have a path larger than N
     # prog = ProgressUnknown("Working hard...", spinner=true)
     while true #loop until get to end node, or Q is empty
         isempty(Q) && (printstyled("Q empty, Z  = $z... \n", color=:light_cyan); break)

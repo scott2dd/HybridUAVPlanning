@@ -1,3 +1,164 @@
+## lets test get_path logic....
+#goal path: [5,10,6,7,8,1]
+#add first: [5,11,6,9,8,1]
+# S, E = 5, 1
+# N = 20
+# came_from = [Vector{Int64}[] for _ in 1:N]
+# push!(came_from[S], [0, 9999]) #S is start... so we just add a dummy entry to [S]
+# label1 = [0, 0,0,S,S, 1, 1,999, 0]
+
+# #add label2....
+# label2 = [0,0,0, 10, S, label1[6], label1[7]+1, label1[8], label1[9]]
+# j = label2[4]
+# path_pointer = findall(x-> x == [label2[5], label2[6]], came_from[j])
+# if isempty(path_pointer)
+#     push!(came_from[j], [label2[5], label2[6]])
+#     label2[6] = length(came_from[j])
+# else
+#     pointer_idx = path_pointer[1]
+#     label2[6] = pointer_idx #label now has index for path in came_from 
+# end
+
+# #add label2b....
+# label2b = [0,0,0, 11, S, label1[6], label1[7]+1, label1[8], label1[9]]
+# j = label2b[4]
+# path_pointer = findall(x-> x == [label2b[5], label2b[6]], came_from[j])
+# if isempty(path_pointer)
+#     push!(came_from[j], [label2b[5], label2b[6]])
+#     label2b[6] = length(came_from[j])
+# else
+#     pointer_idx = path_pointer[1]
+#     label2b[6] = pointer_idx #label now has index for path in came_from 
+# end
+
+# #add label2c.... (2c but with gen diff)
+# label2c = [0,0,0, 11, S, label1[6], label1[7]+1, label1[8], label1[9]]
+# j = label2c[4]
+# path_pointer = findall(x-> x == [label2c[5], label2c[6]], came_from[j])
+# if isempty(path_pointer)
+#     push!(came_from[j], [label2c[5], label2c[6]])
+#     label2c[6] = length(came_from[j])
+# else
+#     pointer_idx = path_pointer[1]
+#     label2c[6] = pointer_idx #label now has index for path in came_from 
+# end
+
+# #label 2b and 2c extend to 6 (3b and 3c)
+# label3b = [0,0,0, 6, 11, label2b[6], label2b[7]+1, label2b[8], label2b[9]]
+# j = label3b[4]
+# path_pointer = findall(x-> x == [label3b[5], label3b[6]], came_from[j])
+# if isempty(path_pointer)
+#     push!(came_from[j], [label3b[5], label3b[6]])
+#     label3b[6] = length(came_from[j])
+# else
+#     pointer_idx = path_pointer[1]
+#     label3b[6] = pointer_idx #label now has index for path in came_from 
+# end
+# label3c = [0,0,0, 6, 11, label2b[6], label2b[7]+1, label2b[8], label2b[9]]
+# j = label3c[4]
+# path_pointer = findall(x-> x == [label3c[5], label3c[6]], came_from[j])
+# if isempty(path_pointer)
+#     push!(came_from[j], [label3c[5], label3c[6]])
+#     label3c[6] = length(came_from[j])
+# else
+#     pointer_idx = path_pointer[1]
+#     label3b[6] = pointer_idx #label now has index for path in came_from 
+# end
+
+
+
+# # add label3.... (5,10,6)
+# label3 = [0,0,0, 6, 10, label2[6], label2[7]+1, label2[8], label2[9]]
+# j = label3[4]
+# path_pointer = findall(x-> x == [label3[5], label3[6]], came_from[j])
+# if isempty(path_pointer)
+#     push!(came_from[j], [label3[5], label3[6]])
+#     label3[6] = length(came_from[j])
+# else
+#     pointer_idx = path_pointer[1]
+#     label3[6] = pointer_idx #label now has index for path in came_from 
+# end
+
+# # add label4...
+# label4 = [0,0,0, 7, 6, label3[6], label3[7]+1, label3[8], label3[9]]
+# j = label4[4]
+# path_pointer = findall(x-> x == [label4[5], label4[6]], came_from[j])
+# if isempty(path_pointer)
+#     push!(came_from[j], [label4[5], label4[6]])
+#     label4[6] = length(came_from[j])
+# else
+#     pointer_idx = path_pointer[1]
+#     label4[6] = pointer_idx #label now has index for path in came_from 
+# end
+
+# #now get path:
+# patha = get_path(label3, came_from, S)
+# pathb = get_path(label3b, came_from, S)
+# pathc = get_path(label3c, came_from, S)
+# #i think this is working.... issue must be gen tracking???
+
+
+# ##lets test get_gen logic.... do same thing but now test gen tracking.....
+# function add_to_gen_track!(label, gen_track)
+#     PL = label[1]
+#     gen_pointer = findall(x -> x == [label[3], label[2]], gen_track[PL])  #label[9] is holding gen on/off
+#     if isempty(gen_pointer)
+#         push!(gen_track[PL], [label[3], label[2]])
+#         label[2] = length(gen_track[PL])
+#     else
+#         pointer_idx = gen_pointer[1]
+#         label[2] = pointer_idx #label now has index for generator pattern in gen_track
+#     end
+
+
+# end
+# #gen1: [0,0,0]
+# #gen2: [0,1,0]
+# #gen3: [1,0,0]
+# N = 10
+# gen_track = [Vector{Int64}[] for _ in 1:N]  #data struct to track genertor patterns 
+# label0 = [1,1, 0] #PL, idx_track (prior then correct), genbool (was gen just on/off)  
+
+# label1a = [2,1,0]
+# label1b = [2,1,0]
+# label1c = [2,1,1]
+
+# add_to_gen_track!(label1a, gen_track)
+# add_to_gen_track!(label1b, gen_track)
+# add_to_gen_track!(label1c, gen_track)
+
+# label2a = [3,1,0]
+# label2b = [3,1,1]
+# label2c = [3,2,0]
+
+# add_to_gen_track!(label2a, gen_track)
+# add_to_gen_track!(label2b, gen_track)
+# add_to_gen_track!(label2c, gen_track)
+
+# label3a = [4,1,0]
+# label3b = [4,2,0]
+# label3c = [4,3,0]
+
+# add_to_gen_track!(label3a, gen_track)
+# add_to_gen_track!(label3b, gen_track)
+# add_to_gen_track!(label3c, gen_track)
+
+
+# label4ca = [5,3,0]
+# label4cb = [5,3,1]
+# add_to_gen_track!(label4ca, gen_track)
+# add_to_gen_track!(label4cb, gen_track)
+
+
+# label4ca = [0;0;0;0;0;0; label4ca]
+# label4cb = [0;0;0;0;0;0; label4cb]
+
+# genca = get_gen(label4ca, gen_track)
+# gencb = get_gen(label4cb, gen_track)
+
+# display(genca)
+# display(gencb)
+
 
 ## OLD LABEL_SEL_INT FUNCTION!!!!! 
 #this is a copy prior to changing to recursive data structs for path and generator
