@@ -1,3 +1,482 @@
+
+##
+# function solve_euc3D_with_label_euc()
+#     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     Nvec = [50:500:2000; 2000:1000:20000]
+#     Nvec = 6000:1000:20000
+#     println("SOLVING EUC3D PROBLEMS WITH LABEL EUC HEUR")
+#     #run 1 to compile
+#     @load "Problems\\euc_probs_disc\\50_4conn_1" euc_inst
+#     tdp = @elapsed cost, path, gen = hybrid_label_selection(euc_inst, heur = "euc")
+
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\euc_probs_disc\\$(n)_4conn_$(k)" euc_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_label_selection(euc_inst, heur = "euc")
+#             println(" $(tdp)")
+#             @save "Solutions\\euc_probs_disc\\$(n)_4conn_$(k)_label_eucLB" tdp cost pathL gen
+#         end
+#      end
+# end 
+
+
+
+
+# function solve_lattice_label()
+#     Nvec = 5:50
+
+#     #run 1 to compile
+#     @load "Problems\\lattice_probs_disc\\5_1" lattice_inst
+#     tdp = @elapsed cost, path, gen = hybrid_label_selection(lattice_inst)
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\lattice_probs_disc\\$(n)_$(k)" lattice_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_label_selection(lattice_inst)
+#             println(" $(tdp)")
+#             @save "Solutions\\lattice_probs_disc\\$(n)_$(k)_label" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+# function solve_euc2D_label()
+#     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     # Nvec = [50:50:2000; 3000:1000:20000]
+#     Nvec = [50:500:2000; 2000:1000:20000]
+
+#     #run 1 to compile
+#     @load "Problems\\euc_probs2D\\50_1" euc_inst
+#     tdp = @elapsed cost, path, gen = hybrid_label_selection(euc_inst)
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\euc_probs2D\\$(n)_$(k)" euc_inst  #  <============================ switch 
+#             tdp = @elapsed cost, pathL, gen = hybrid_label_selection(euc_inst)
+#             println(" $(tdp)")
+#             @save "Solutions\\euc_probs2D\\$(n)_$(k)_label" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+# function solve_lattice2D_label()
+#     Nvec = 5:50
+
+#     #run 1 to compile
+#     @load "Problems\\lattice_probs_2D\\5_1" lattice_inst
+#     tdp = @elapsed cost, path, gen = hybrid_label_selection(lattice_inst)
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\lattice_probs_2D\\$(n)_$(k)" lattice_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_label_selection(lattice_inst)
+#             println(" $(tdp)")
+#             @save "Solutions\\lattice_probs_2D\\$(n)_$(k)_label" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+
+# function solve_euc2D_CPLEX()
+#     Nvec = [50:500:2000; 2000:1000:20000]
+#     #run 1 to compile
+#     @load "Problems\\euc_probs2D\\50_1" euc_inst
+#     tdp, cost, pathL, gen = MILP_hybrid(euc_inst)
+    
+#     for n in Nvec
+#         tvec = []
+#         for k in 1:10
+#             @load "Problems\\euc_probs2D\\$(n)_$(k)" euc_inst 
+#             tMILP, cost, pathL, gen = MILP_hybrid(euc_inst) 
+#             @save "Solutions\\euc_probs2D\\$(n)_$(k)_CPLEX" tMILP cost pathL gen 
+#             push!(tvec, tMILP)
+#         end
+#         tmean = mean(tvec)
+#         if tmean >= 3600/2
+#             println("  **  Taking 30 min average @ N = $(n)  ** ")
+#             return 0
+#         end
+#     end
+# end
+
+# function solve_lattice2D_CPLEX()
+#     Nvec = 5:50
+    
+#     #run 1 to compile
+#     @load "Problems\\lattice_probs_2D\\5_1" lattice_inst
+#     tdp, cost, pathL, gen = MILP_hybrid(lattice_inst)
+    
+#     for n in Nvec
+#         tvec = []
+#         for k in 1:10
+#             @load "Problems\\lattice_probs_2D\\$(n)_$(k)" lattice_inst 
+#             tMILP, cost, pathL, gen = MILP_hybrid(lattice_inst) 
+#             @save "Solutions\\lattice_probs_2D\\$(n)_$(k)_CPLEX" tMILP cost pathL gen 
+#             push!(tvec, tMILP)
+#         end
+#         tmean = mean(tvec)
+#         if tmean >= 3600/2
+#             println("  **  Taking 30 min average @ N = $(n)  ** ")
+#             return 0
+#         end
+#     end
+# end
+
+# function solve_euc3D_CPLEX()
+#     Nvec = [50:500:2000; 2000:1000:20000]
+#     #run 1 to compile
+#     @load "Problems\\euc_probs_disc\\50_4conn_1" euc_inst
+#     tdp, cost, pathL, gen = MILP_hybrid(euc_inst)
+    
+#     for n in Nvec
+#         tvec = []
+#         for k in 1:10
+#             @load "Problems\\euc_probs_disc\\$(n)_4conn_$(k)" euc_inst 
+#             tMILP, cost, pathL, gen = MILP_hybrid(euc_inst) 
+#             @save "Solutions\\euc_probs_disc\\$(n)_4conn_$(k)_CPLEX" tMILP cost pathL gen 
+#             push!(tvec, tMILP)
+#         end
+#         tmean = mean(tvec)
+#         if tmean >= 3600/2
+#             println("  **  Taking 30 min average @ N = $(n)  ** ")
+#             return 0
+#         end
+#     end
+# end
+
+# function solve_lattice3D_CPLEX()
+#     Nvec = 5:50
+#     #run 1 to compile
+#     @load "Problems\\lattice_probs_disc\\5_1" lattice_inst
+#     tdp, cost, pathL, gen = MILP_hybrid(lattice_inst)
+    
+#     for n in Nvec
+#         tvec = []
+#         for k in 1:10
+#             @load "Problems\\lattice_probs_disc\\$(n)_$(k)" lattice_inst 
+#             tMILP, cost, pathL, gen = MILP_hybrid(lattice_inst) 
+#             @save "Solutions\\lattice_probs_disc\\$(n)_$(k)_CPLEX" tMILP cost pathL gen 
+#             push!(tvec, tMILP)
+#         end
+#         tmean = mean(tvec)
+#         if tmean >= 3600/3
+#             println("  **  Taking 30 min average @ N = $(n)  ** ")
+#             return 0
+#         end
+#     end
+# end
+
+
+# function solve_euc2D_with_label_euc()
+# # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     Nvec = [50:500:2000; 2000:1000:20000]
+    
+#     println("SOLVING EUC2D PROBLEMS WITH LABEL EUC HEUR")
+#     #run 1 to compile
+#     @load "Problems\\euc_probs2D\\50_1" euc_inst
+#     tdp = @elapsed cost, path, gen = hybrid_label_selection(euc_inst, heur = "euc")
+
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\euc_probs2D\\$(n)_$(k)" euc_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_label_selection(euc_inst, heur = "euc")
+#             println(" $(tdp)")
+#             @save "Solutions\\euc_probs2D\\$(n)_$(k)_label_eucLB" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+# function solve_euc2D_with_node_euc()
+#     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     Nvec = [50:500:2000; 2000:1000:20000]
+    
+#     println("SOLVING EUC2D PROBLEMS WITH NODE EUC HEUR")
+#     #run 1 to compile
+#     @load "Problems\\euc_probs2D\\50_1" euc_inst
+#     tdp = @elapsed cost, path, gen = hybrid_node_selection(euc_inst, heur = "euc")
+
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\euc_probs2D\\$(n)_$(k)" euc_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_node_selection(euc_inst, heur = "euc")
+#             println(" $(tdp)")
+#             @save "Solutions\\euc_probs2D\\$(n)_$(k)_node_eucLB" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+
+# function solve_euc3D_with_node_euc()
+#     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     Nvec = [50:500:2000; 2000:1000:20000]
+    
+#     println("SOLVING EUC3D PROBLEMS WITH NODE EUC HEUR")
+#     #run 1 to compile
+#     @load "Problems\\euc_probs_disc\\50_4conn_1" euc_inst
+#     tdp = @elapsed cost, path, gen = hybrid_node_selection(euc_inst, heur = "euc")
+
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\euc_probs_disc\\$(n)_4conn_$(k)" euc_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_node_selection(euc_inst, heur = "euc")
+#             println(" $(tdp)")
+#             @save "Solutions\\euc_probs_disc\\$(n)_4conn_$(k)_node_eucLB" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+# function solve_lattice2D_with_label_euc()
+#     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     Nvec = Nvec = 5:50
+    
+#     println("SOLVING LATTICE2D PROBLEMS WITH LABEL EUC HEUR")
+    
+#     @load "Problems\\lattice_probs_2D\\5_1" lattice_inst
+#     tdp = @elapsed cost, path, gen = hybrid_label_selection(lattice_inst, heur = "euc")
+
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\lattice_probs_2D\\$(n)_$(k)" lattice_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_label_selection(lattice_inst, heur = "euc")
+#             println(" $(tdp)")
+#             @save "Solutions\\lattice_probs_2D\\$(n)_$(k)_label_eucLB" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+# function solve_lattice2D_with_node_euc()
+#     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     Nvec = Nvec = 5:50
+    
+#     println("SOLVING LATTICE2D PROBLEMS WITH NODE EUC HEUR")
+    
+#     @load "Problems\\lattice_probs_2D\\5_1" lattice_inst
+#     tdp = @elapsed cost, path, gen = hybrid_node_selection(lattice_inst, heur = "euc")
+
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\lattice_probs_2D\\$(n)_$(k)" lattice_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_node_selection(lattice_inst, heur = "euc")
+#             println(" $(tdp)")
+#             @save "Solutions\\lattice_probs_2D\\$(n)_$(k)_node_eucLB" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+# function solve_lattice3D_with_label_euc()
+#     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     Nvec = Nvec = 5:50
+    
+#     println("SOLVING LATTICE3D PROBLEMS WITH LABEL EUC HEUR")
+    
+#     @load "Problems\\lattice_probs_disc\\5_1" lattice_inst
+#     tdp = @elapsed cost, path, gen = hybrid_label_selection(lattice_inst, heur = "euc")
+
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\lattice_probs_disc\\$(n)_$(k)" lattice_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_label_selection(lattice_inst, heur = "euc")
+#             println(" $(tdp)")
+#             @save "Solutions\\lattice_probs_disc\\$(n)_$(k)_label_eucLB" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+# function solve_lattice3D_with_node_euc()
+#     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     Nvec = Nvec = 5:50
+    
+#     println("SOLVING LATTICE3D PROBLEMS WITH NODE EUC HEUR")
+    
+#     @load "Problems\\lattice_probs_disc\\5_1" lattice_inst
+#     tdp = @elapsed cost, path, gen = hybrid_node_selection(lattice_inst, heur = "euc")
+
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\lattice_probs_disc\\$(n)_$(k)" lattice_inst   
+#             tdp = @elapsed cost, pathL, gen = hybrid_node_selection(lattice_inst, heur = "euc")
+#             println(" $(tdp)")
+#             @save "Solutions\\lattice_probs_disc\\$(n)_$(k)_node_eucLB" tdp cost pathL gen
+#         end
+#     end
+# end 
+
+
+
+
+
+##################################################################
+## Monkey code.... 
+
+### 3: SOlve discrete euclidean with LABEL SEL
+# function solve_euc_disc_lbl()
+#     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+#     # Nvec = [50:50:2000; 3000:1000:20000]
+#     Nvec = [50:500:2000; 2000:1000:20000]
+
+#     #run 1 to compile
+#     @load "Problems\\euc_probs_disc\\50_4conn_1" euc_inst
+#     tdp = @elapsed cost, path, gen= hybrid_label_selection(euc_inst)
+#     for n in Nvec
+#         println("N = $(n)")
+#         for k = 1:10
+#             print("  k = $(k): ")
+#             @load "Problems\\euc_probs_disc\\$(n)_4conn_$(k)" euc_inst  #  <============================ switch 
+#             tdp = @elapsed cost, pathL, gen  = hybrid_label_selection(euc_inst)
+#             println(" $(tdp)")
+#             @save "Solutions\\euc_probs_disc\\$(n)_4conn_$(k)_label" tdp cost pathL gen  #  <=================== switchh
+#         end
+#     end
+# end 
+# solve_euc_disc_lbl()
+
+
+
+## Let's solve the LP to get LB's, we can compare them with Astar LB...
+# Nvec2 = [30:40:2000; 2000:100:10000] 
+# timevec = zeros(length(Nvec2))
+# LB = zeros(length(Nvec2))
+
+# for n in Nvec
+#     println(n)
+#     @load "Problems\\euc_probs\\$(n)_4conn" euc_inst
+#     time, LB = lower_boundLP(euc_inst)
+#     println(LB)
+# end
+
+
+
+# ## rename path to pathL
+# using JLD2
+# Nvec = [50:500:2000; 2000:1000:20000]
+
+# for n in Nvec
+#     for k in 1:10
+#         # if n==50 && k==1
+#         #     continue
+#         # end
+#         @load "Solutions\\euc_probs2D_prune\\$(n)_4conn_$(k)" tdp cost path gen lX
+#         pathL = path
+#         @save "Solutions\\euc_probs2D_prune\\$(n)_4conn_$(k)" tdp cost pathL gen lX  
+#     end
+# end
+
+# ##DP1 vs DP new
+# full_def = load_full_def([10,10,5], 1)
+# @time out1 = hybrid_DP_heapSC(full_def);
+# @time out2 = hybrid_DP(full_def);
+# println("Labels made 2D: $(out1[end])")
+# println("Labels made 3D: $(out2[end])")c
+
+
+
+
+
+# ## COmpare MILP and DP
+# println(" \nSolve MILP:") 
+# full_def = load_full_def([10,10,1], 2)
+# tMILP, cost, pathMILP, gen = MILP_hybrid(full_def, tlim = 15*60)
+# println("MILP Solved!  Time = $(tMILP) (s)")
+# println("    Lower Bound = $(cost)")
+
+
+
+
+
+# ## Solve Grid Probs... with DP and MILP
+# # never finished these!
+# function solve_grid(Dim)
+#     for k = 1:20
+#         if k == 1
+#             full_def = load_full_def([5,5,5], k)
+#             MILP_hybrid(full_def, tlim = 60);
+#             hybrid_DP(full_def);
+#         end
+#         #load
+#         full_def = load_full_def(Dim, k)
+#         println("\n\n K = $(k)")
+#         #MILP ------------
+#         outMILP = 0
+#         try
+#             outMILP = MILP_hybrid(full_def, tlim = 15*60)
+#             println("Integer Solutions found...")
+#         catch e
+#             println("   0 Solutions in model")
+#         end
+#         time, cost, path, gen = outMILP[1], outMILP[2], outMILP[3], outMILP[4]
+#         @save "Solutions\\grid_probs3D\\$(Dim[1])x$(Dim[2])_$(Dim[3])_$(k)_MILP" time cost path gen
+#         println(k, " MILP:", time)
+
+
+#         #DP -----------------
+#         tDP = @elapsed DP = hybrid_DP(full_def, title = "$(nn)x$(nn)x$(nn) Problem $(k)");
+#         cost, path, gen = DP[1], DP[2], DP[3]
+#         @save "Solutions\\grid_probs3D\\$(Dim[1])x$(Dim[2])_$(Dim[3])_$(k)" tDP cost path gen
+#         println("   DP:", tDP)
+#     end
+# end
+
+# solve_grid([5,5,5])
+
+
+
+
+#old....
+# ## solve smooth probs... with DP and MILP
+# for nn = 1:40
+#     @load "Problems\\smooth_probs\\$(nn)x$(nn)" def
+#     println("\n\n\n\n Problem  ", nn)
+#     println("Now solve....")
+#     cost, xsol, gsol, bstate, qstate, time = MILP_hybrid(def)
+#     println("****NOW SAVE **** ")
+#     # @save "Solutions\\smooth_probs\\$(nn)x$(nn)MILP" cost xsol gsol bstate qstate time
+#     println(" ", time)
+
+#     # @load "Problems\\smooth_probs\\$(nn)x$(nn)" def
+#     # time = @elapsed opt_cost, opt_path, opt_gen = hybrid_DP_heap(def)
+#     # @save "Solutions\\smooth_probs\\$(nn)x$(nn)_DP" time opt_cost opt_path opt_gen
+#     # println("   ", time)
+# end
+
+
+
+# ## Solve map probs.......
+# @load "Maps\\map_def2" map_def
+# for i = 1:25
+#     println("Problem $(i) ")
+#     @load "Problems\\map_probs\\$(i)" prob
+#     temp_prob = ProblemDef(prob.S, prob.E, map_def.Alist, map_def.A, map_def.C, map_def.G, map_def.Z,
+#                            prob.B0, prob.Q0, map_def.anchor_list, map_def.Dim)
+
+#     E = temp_prob.E
+#     temp_prob.anchor_list[E]
+#     i == 1 && hybrid_DP_heap(temp_prob)
+#     time = @elapsed opt_cost, opt_path, opt_gen, lX = hybrid_DP_heap(temp_prob)
+#     println(E)
+#     println(opt_path)
+
+#     @save "Solutions\\map_probs\\$(i)" time opt_cost opt_path opt_gen lX
+# end
+
+
 ## lets test get_path logic....
 #goal path: [5,10,6,7,8,1]
 #add first: [5,11,6,9,8,1]

@@ -39,7 +39,6 @@ NOTE: CPLEX not installed in this package.  Dependencies would not work with old
 Need to update machine CPLEX binaries, update julia CPLEX_BINARY_PATH, then add new CPLEX.jl (unpinned) and fix code to use new CPLEX 
 =#
 
-
 include("struct_defs.jl")
 include("label_utills.jl")
 include("label_label_sel.jl")
@@ -47,6 +46,7 @@ include("label_node_sel.jl")
 include("plotting.jl")
 include("battery.jl")
 include("opt_contrl.jl")
+include("solve_functions.jl")
 # include("MILP_definition3D.jl")  #later will update with correct CPLEX
 
 
@@ -89,6 +89,9 @@ export MILP_to_opt_ctrl
 export get_tag
 export solve_gen_optimal_control
 
+
+export solve_euc
+export solve_lattice
 #do precompiles later? This gives an error when doing auto-Julia-Pkg.jl precompilation.....
 # precompile(hybrid_label_selection)
 # precompile(hybrid_node_selection)

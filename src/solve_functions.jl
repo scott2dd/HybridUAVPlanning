@@ -1,0 +1,103 @@
+function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "astar")
+    # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
+    # Nvec = [50:50:2000; 3000:1000:20000]
+    Nvec = [50:500:2000; 2000:1000:20000]
+
+    if algo == "label"
+        algof = hybrid_label_selection
+        algo_tag = "_label"
+    elseif algo == "node"
+        algof = hybrid_node_selection
+        algo_tag = "_node"
+    else
+        error("invalid algorithm selection")
+    end
+
+    if dims == "2D"
+        conn = ""
+        prob = "euc_probs2D"
+    elseif dims == "3D"
+        conn = "_4conn"
+        prob = "euc_probs_disc"
+    else
+        error("invalid problem Dimensions.  Use \"2D\" or \"3D\" ")
+    end
+
+    if heur == "astar"
+        heur_tag = ""
+    elseif heur == "euc"
+        heur_tag = "_eucLB"
+    elseif heur == "manhattan"
+        error("manhattan distance not working right now")
+    else 
+        error("invalud heuristic.  Use \"astar\" or \"euc\" or \"manhattan\"")
+    end
+
+    #run 1 to compile
+    @load "Problems\\$(prob)\\50$(conn)_1" euc_inst
+    tdp = @elapsed cost, path, gen = algof(euc_inst, heur = heur)
+    
+    printstyled("\n Solving Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) \n ", color=:light_green)
+    for n in Nvec
+        printstyled("N = $(n) \n", color = :light_green)
+        for k = 1:10
+            print("  k = $(k): ")
+            @load "Problems\\$(prob)\\$(n)$(conn)_$(k)" euc_inst 
+            tdp = @elapsed cost, pathL, gen = algof(euc_inst)
+            println(" $(tdp)")
+            @save "Solutions\\$(prob)\\$(n)$(conn)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
+        end
+    end
+end 
+
+function solve_lattice(;algo::String = "label", dims::String="2D", heur::String = "astar")
+    Nvec = 5:50
+
+    if algo == "label"
+        algof = hybrid_label_selection
+        algo_tag = "_label"
+    elseif algo == "node"
+        algof = hybrid_node_selection
+        algo_tag = "_node"
+    else
+        error("invalid algorithm selection: \"node\" or \"label\"")
+    end
+
+    if dims == "2D"
+        prob = "lattice_probs_2D"
+    elseif dims == "3D"
+        prob = "lattice_probs_disc"
+    else
+        error("invalid problem Dimensions.  Use \"2D\" or \"3D\" ")
+    end
+
+    if heur == "astar"
+        heur_tag = ""
+    elseif heur == "euc"
+        heur_tag = "_eucLB"
+    elseif heur == "manhattan"
+        error("manhattan distance not working right now")
+    else 
+        error("invalud heuristic.  Use \"astar\" or \"euc\" or \"manhattan\"")
+    end
+
+    #run 1 to compile
+    @load "Problems\\$(prob)\\5_1" lattice_inst
+    tdp = @elapsed cost, path, gen = algof(lattice_inst, heur = heur)
+    
+    printstyled("\n Solving Lattice $(dims) Problems  || h(i): $(heur) || $(algo) \n ", color=:light_green)
+    for n in Nvec
+        printstyled("N = $(n) \n", color = :light_green)
+        for k = 1:10
+            print("  k = $(k): ")
+            @load "Problems\\$(prob)\\$(n)_$(k)" lattice_inst
+            tdp = @elapsed cost, pathL, gen = algof(lattice_inst)
+            println(" $(tdp) ")
+            @save "Solutions\\$(prob)\\$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
+        end
+    end
+end 
+
+
+
+
