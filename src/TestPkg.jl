@@ -20,7 +20,7 @@ import Statistics.mean
 using Colors 
 using Interpolations
 using JuMP
-# using CPLEX
+# using CPLEX  -> update each system w/ CPLEX 22.11 binaries installed....
 using Ipopt 
 using DifferentialEquations
 using Interpolations        
@@ -41,9 +41,9 @@ Need to update machine CPLEX binaries, update julia CPLEX_BINARY_PATH, then add 
 
 
 include("struct_defs.jl")
+include("label_utills.jl")
 include("label_label_sel.jl")
 include("label_node_sel.jl")
-include("label_utills.jl")
 include("plotting.jl")
 include("battery.jl")
 include("opt_contrl.jl")

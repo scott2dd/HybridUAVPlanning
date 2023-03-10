@@ -26,7 +26,7 @@ function hybrid_node_selection(def::EucGraphInt; heur::String = "astar")
     if heur == "astar"
         heur_label! = get_heur_label(Fvec, graph, C, E, heur_astar)
     elseif heur == "euc"
-        heur_label! = get_heur_label_euc_disc(Fvec, locs, E)
+        heur_label! = get_heur_label_euc(Fvec, locs, E)
     elseif heur == "manhattan"
         
     else
