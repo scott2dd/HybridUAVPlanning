@@ -34,7 +34,6 @@ function hybrid_node_selection(def::EucGraphInt; heur::String = "astar")
         return 0,[0], Bool.([0])
     end
     if heur_label!(S) == 2^63-1     
-        printstyled("Infinite Start Heuristic\n",color=:light_red)
         return 0,[0], Bool.([0])
     end
     node_queue = fill(Inf, N) # keep track of minimum candidate label

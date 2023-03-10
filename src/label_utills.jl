@@ -65,7 +65,7 @@ function get_heur_label(Fvec::Vector{Float64}, graph, C, E, heur_astar)
             astar_out = a_star(graph, i, E, C, heur_astar)
             if isempty(astar_out)
                 path_list = [i] 
-                printstyled("No path to goal!! \n", color=:light_red)
+                printstyled("No path to goal!!", color=:light_red)
                 LB_vec = [Inf]
             else
                 path_list, LB_vec, cost = astar_proc(astar_out, C)

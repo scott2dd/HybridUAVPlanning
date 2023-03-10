@@ -39,7 +39,6 @@ function hybrid_label_selection(def::EucGraphInt; heur::String = "astar")
         return return 0,[0], Bool.([0])
     end
     if heur_label!(S) == 2^63 - 1     
-        println("Infinite Start Heuristic...")
         return 0,[0], Bool.([0])
     end
     
