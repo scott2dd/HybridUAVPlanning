@@ -163,7 +163,12 @@ function dom_min(X::Vector{Int64},Y::Vector{Int64})
     (X[1] <= Y[1] && X[2] <= Y[2]  && X[3] <= Y[3]) && (bool = true)  
     return bool 
 end
-
+function dom(X::Vector{Int64},Y::Vector{Int64})
+    #returns true if X >> Y
+    bool = false
+    (X[1] <= Y[1] && X[2] >= Y[2]  && X[3] >= Y[3]) && (bool = true)
+    return bool
+end
 function EFF_list(Γ::Vector{Vector{Int64}}, new::Vector{Int64})  #should not need this, but may be faster if we have less? like a merge sort?
     EFF_bool = true
     for i in 1:length(Γ)  #γ in Γ
