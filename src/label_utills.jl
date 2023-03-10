@@ -132,6 +132,42 @@ end
 
 
 
+function merge_3D(X::Vector{Vector{Int64}}, Y::Vector{Vector{Int64}}) #O(N^2 / 2 + N / 2 + NlogN)  -> slightly better than O(N^2)
+    Mtemp::Vector{Vector{Int64}} = vcat(X, Y)
+    for i in 1:length(Mtemp)
+        Mtemp[i][2:3] .*= -1
+    end
+    sort!(Mtemp) #sorts by 1st el then 2nd el then 3rd el....
+    boolv = ones(Bool, length(Mtemp))
+    #now go through each element 
+    for i in eachindex(Mtemp)
+        label =  Mtemp[i]
+        for ii in 1:(i-1)
+            boolv[ii] == 0 && continue #if already dommed don't need to compare
+            if dom_min(Mtemp[ii], label)
+                boolv[i] = 0
+                break
+            end
+     end
+    end
+    M_out = Mtemp[boolv] 
+    for i in 1:length(M_out)
+        M_out[i][2:3] .*= -1
+    end
+    return M_out
+end
+
+function EFF_list(Γ::Vector{Vector{Int64}}, new::Vector{Int64})  #should not need this, but may be faster if we have less? like a merge sort?
+    EFF_bool = true
+    for i in 1:length(Γ)  #γ in Γ
+        γ = Γ[i]
+        if dom(γ, new)
+            EFF_bool = false
+            return EFF_bool
+        end
+    end
+    return EFF_bool
+end
 
 
 
@@ -158,7 +194,13 @@ function EFF_P(P::Vector{Matrix{T}}, label_new::Vector{T}) where T<:Number
     end
     return true
 end
-    #
+
+
+
+
+
+
+
 function load_full_def(Dim, k)
     xx, yy, zz = Dim[1], Dim[2], Dim[3]
     @load "Problems\\grid_probs3D\\$(xx)x$(yy)x$(zz)_$(k)" prob
