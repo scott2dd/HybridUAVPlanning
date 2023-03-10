@@ -144,7 +144,7 @@ function merge_3D(X::Vector{Vector{Int64}}, Y::Vector{Vector{Int64}}) #O(N^2 / 2
         label =  Mtemp[i]
         for ii in 1:(i-1)
             boolv[ii] == 0 && continue #if already dommed don't need to compare
-            if dom_min(Mtemp[ii], label)
+            if dom(Mtemp[ii], label)
                 boolv[i] = 0
                 break
             end
