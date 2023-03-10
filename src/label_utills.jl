@@ -144,7 +144,7 @@ function merge_3D(X::Vector{Vector{Int64}}, Y::Vector{Vector{Int64}}) #O(N^2 / 2
         label =  Mtemp[i]
         for ii in 1:(i-1)
             boolv[ii] == 0 && continue #if already dommed don't need to compare
-            if dom(Mtemp[ii], label)
+            if dom_min(Mtemp[ii], label)
                 boolv[i] = 0
                 break
             end
@@ -155,6 +155,13 @@ function merge_3D(X::Vector{Vector{Int64}}, Y::Vector{Vector{Int64}}) #O(N^2 / 2
         M_out[i][2:3] .*= -1
     end
     return M_out
+end
+
+function dom_min(X::Vector{Int64},Y::Vector{Int64})
+    #returns true if X >> Y
+    bool = false
+    (X[1] <= Y[1] && X[2] <= Y[2]  && X[3] <= Y[3]) && (bool = true)  
+    return bool 
 end
 
 function EFF_list(Γ::Vector{Vector{Int64}}, new::Vector{Int64})  #should not need this, but may be faster if we have less? like a merge sort?

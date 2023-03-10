@@ -26,7 +26,7 @@ function dom(X::Vector,Y::Vector)
     return bool
 end
 
-function dom_min(X::Vector,Y::Vector)
+function dom_min(X::Vector{Int64},Y::Vector{Int64})
     #returns true if X >> Y
     bool = false
     (X[1] <= Y[1] && X[2] <= Y[2]  && X[3] <= Y[3]) && (bool = true)  
