@@ -33,7 +33,7 @@ function hybrid_label_selection(def::EucGraphInt; heur::String = "astar")
     elseif heur == "euc"
         heur_label! = get_heur_label_euc(Fvec, locs, E)
     elseif heur == "manhattan"
-        rturn 0,[0], Bool.([0])
+        return 0,[0], Bool.([0])
     else
         println("invalid heuristic... breaking")
         return return 0,[0], Bool.([0])
