@@ -62,7 +62,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
         end
         if mean(times_vec) > tlim
             printstyled("\n STOPPED EARLY \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)        
-            @save "Solutions\\$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
+            @save "END_Solutions\\$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
         end
     end
@@ -135,7 +135,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
         end
     end
     printstyled("\n SOLVED \n --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
-    @save "Solutions\\$(prob)$(algo_tag)$(heur_tag)" Nvec[end] #save where we ended early.....
+    @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" Nvec[end] #save where we ended early.....
 
 end 
 
