@@ -7,6 +7,10 @@
 
 
 # Main Function, let's try only for EucGraphInt input first....
+"""
+    input EucGraphInt instance
+    heur - optional argument: "euc" or "astar" (manhattan not working right now)
+"""
 function hybrid_node_selection(def::EucGraphInt; heur::String = "astar")
     S, E, Alist, F, C, Z = def.S, def.E, def.Alist, def.F, def.C, def.Z
     Bstart, Qstart = def.B0, def.Q0

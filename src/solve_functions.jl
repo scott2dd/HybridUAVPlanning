@@ -1,3 +1,14 @@
+"""
+Function to solve euclidean instances, need to specify type.
+Input:  algo::"node" or "label:
+        dims:: "2D" or "3D"
+        heur:: "astar" or "euc"
+        
+        output: none, saves results to files.
+
+        Need to incorporate a time limit to terminate... if problems are taking too long we just end it early (don't go to end of Nvec)
+        Then save last size we finished at....
+"""
 function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "astar")
     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
     # Nvec = [50:50:2000; 3000:1000:20000]
@@ -50,6 +61,17 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     end
 end 
 
+"""
+Function to solve euclidean instances, need to specify type.
+Input:  algo::"node" or "label:
+        dims:: "2D" or "3D"
+        heur:: "astar" or "euc"
+        
+        output: none, saves results to files.
+
+        Need to incorporate a time limit to terminate... if problems are taking too long we just end it early (don't go to end of Nvec)
+        Then save last size we finished at....
+"""
 function solve_lattice(;algo::String = "label", dims::String="2D", heur::String = "astar")
     Nvec = 5:50
     

@@ -26,6 +26,12 @@ struct OptControlSolution
     time_to_solve::Float64
 end
 
+"""
+Give an OCP::OptControlProb, path and gen
+
+Output:
+out::OptControlSolution
+"""
 function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen::Vector{Bool}; linear = true)
     myModel = Model(Ipopt.Optimizer)
     try register(myModel, :atan, 2, atan; autodiff = true) catch end# register atan as JuMP function 
@@ -116,6 +122,17 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     return sol_out   
 end
 
+
+"""
+Takes MILP instance and maps to optimal control...
+
+Input:
+N, k
+prob:: string for problem loading
+algo:: string for algo type
+conn:: string for _4conn or ""
+heur:: strig for heuristic used, "" if astar
+"""
 function MILP_to_opt_ctrl(N::Int64, k::Int64; prob::String = "euc_probs2D", algo::String = "_label", conn::String = "", heur::String = "")
     @load "Solutions\\$(prob)\\$(N)$(conn)_$(k)$(algo)$(heur)" pathL gen
     @load "Problems\\$(prob)\\$(N)$(conn)_$(k)" euc_inst
@@ -132,6 +149,13 @@ function MILP_to_opt_ctrl(N::Int64, k::Int64; prob::String = "euc_probs2D", algo
     return OCP, pathL, gen
 end
 
+
+"""
+give N, k, prob, algo, conn, and heur
+with_path: 1 for getting Solution\\...
+with_path: 0 for just problem taf (20_4conn_1_node_euc)
+
+"""
 function get_tag(N::Int64, k::Int64; prob::String = "euc_probs2D", algo::String = "_label", conn::String = "", heur::String = "", with_path::Bool = false)
     if with_path
         return "Solutions\\OCP\\$(N)$(conn)_$(k)$(algo)$(heur)"
