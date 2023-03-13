@@ -94,10 +94,10 @@ export solve_euc
 export solve_lattice
 
 
+"test function.  Writing documentation.  Then commiting and syncing. Then updating TestPkg#master from Pkg environment"
 function foo()
     return 0
 end
-
 export foo
 #do precompiles later? This gives an error when doing auto-Julia-Pkg.jl precompilation.....
 # precompile(hybrid_label_selection)
