@@ -52,7 +52,7 @@ end
 
 function solve_lattice(;algo::String = "label", dims::String="2D", heur::String = "astar")
     Nvec = 5:50
-
+    
     if algo == "label"
         algof = hybrid_label_selection
         algo_tag = "_label"
