@@ -59,6 +59,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
             @save "Solutions\\$(prob)\\$(n)$(conn)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
         end
     end
+    printstyled("\n SOLVED \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
 end 
 
 """
@@ -118,6 +119,8 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
             @save "Solutions\\$(prob)\\$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
         end
     end
+    printstyled("\n SOLVED \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
+
 end 
 
 
