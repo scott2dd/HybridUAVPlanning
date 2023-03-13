@@ -66,8 +66,9 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
             return 0
         end
     end
-    printstyled("\n SOLVED \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
-    @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" Nvec[end]
+    printstyled("\n SOLVED --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
+    n = Nvec[end]
+    @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n
 end 
 
 """
@@ -134,8 +135,9 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
             return 0
         end
     end
-    printstyled("\n SOLVED \n --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
-    @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" Nvec[end] #save where we ended early.....
+    printstyled("\n SOLVED --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
+    n = Nvec[end]
+    @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
 
 end 
 
