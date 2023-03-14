@@ -9,13 +9,14 @@ Input:  algo::"node" or "label:
         Need to incorporate a time limit to terminate... if problems are taking too long we just end it early (don't go to end of Nvec)
         Then save last size we finished at....
 """
+
 function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "astar", tlim = 3600, Nstart = 50)
     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
     # Nvec = [50:50:2000; 3000:1000:20000]
     Nvec = [50:500:2000; 2000:1000:20000]
     Nvecwhole = [50:500:2000; 2000:1000:20000]
     nidx = 0
-    Nstart > 1900 && (nidx = findall(x->x==Nstart, Nvec)[1] - 1); Nvec = Nstart:1000:20000)
+    Nstart > 1900 && (nidx = findall(x->x==Nstart, Nvec)[1] - 1; Nvec = Nstart:1000:20000)
 
 
     if algo == "label"
