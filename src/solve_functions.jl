@@ -51,7 +51,9 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     tdp = @elapsed cost, path, gen = algof(euc_inst, heur = heur)
     
     printstyled("\n Solving Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) \n ", color=:light_green)
+    nidx = 0
     for n in Nvec
+        nidx += 1
         printstyled("N = $(n) \n", color = :light_green)
         times_vec = Float64[]
         Zbreak_count = 0
@@ -63,11 +65,11 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
             @save "Solutions\\$(prob)\\$(n)$(conn)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(times_vec, tdp)
             cost == 0 && (Zbreak_count += 1)
-            Zbreak_count > 3 && break
+            Zbreak_count > 3 && (nidx -= 1;  break) 
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
             printstyled("\n STOPPED EARLY \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)        
-            @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
+            @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" Nvec[nidx] #save where we ended early.....
             return 0
         end
     end
