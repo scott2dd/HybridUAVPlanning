@@ -171,7 +171,7 @@ function hybrid_node_selection(def::EucGraphInt; heur::String = "astar")
             end
         end
         z+=1
-        z == 50_000 && (printstyled("Z BREAK... @Z=$(z)", color=:light_red); break)
+        z == 50_000 && (printstyled("ZBREAK@$(z)", color=:light_red); break)
         # z%500 == 0 && ProgressMeter.next!(prog)
     end
     return 0,[0], Bool.([0])
