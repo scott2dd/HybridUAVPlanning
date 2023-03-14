@@ -145,7 +145,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
             tdp = @elapsed cost, pathL, gen = algof(lattice_inst)
             println(" $(tdp) ")
             @save "Solutions\\$(prob)\\$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
-            push!(time_vec, tdp)
+            push!(times_vec, tdp)
             cost == 0 && (Zbreak_count += 1)
             Zbreak_count > 3 && (nidx -= 1;  break) 
         end
