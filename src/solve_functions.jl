@@ -11,8 +11,6 @@ Input:  algo::"node" or "label:
 """
 
 function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "astar", tlim = 3600, Nstart = 50)
-    # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
-    # Nvec = [50:50:2000; 3000:1000:20000]
     Nvec = [50:500:2000; 2000:1000:20000]
     Nvecwhole = [50:500:2000; 2000:1000:20000]
     nidx = 0
@@ -72,7 +70,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
             printstyled("\n STOPPED EARLY \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red) 
-            nwholeidx = findall(x->x==n, Nvecwhole) - 1
+            nwholeidx = findall(x->x==n, Nvecwhole)[1] - 1
             n = Nvecwhole[nwholeidx]
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
@@ -94,9 +92,12 @@ Input:  algo::"node" or "label:
         Time limit to terminate... if problems are taking too long we just end it early (don't go to end of Nvec)
         Save last size we finished at....
 """
-function solve_lattice(;algo::String = "label", dims::String="2D", heur::String = "astar", tlim = 3600)
+function solve_lattice(;algo::String = "label", dims::String="2D", heur::String = "astar", tlim = 3600, Nstart = 5)
     Nvec = 5:50
-    
+    Nvecwhole = 5:50
+    nidx = 0
+    Nstart > 5 && (nidx = findall(x->x==Nstart, Nvec)[1] - 1; Nvec = Nstart:50)
+
     if algo == "label"
         algof = hybrid_label_selection
         algo_tag = "_label"
@@ -142,16 +143,18 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
             @save "Solutions\\$(prob)\\$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(time_vec, tdp)
             cost == 0 && (Zbreak_count += 1)
-            Zbreak_count > 3 && break
+            Zbreak_count > 3 && (nidx -= 1;  break) 
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
             printstyled("\n STOPPED EARLY \n --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)        
+            nwholeidx = findall(x->x==n, Nvecwhole)[1] - 1
+            n = Nvecwhole[nwholeidx]
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
         end
     end
     printstyled("\n SOLVED --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
-    n = Nvec[end]
+    n = Nvecwhole[end]
     @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
 
 end 
