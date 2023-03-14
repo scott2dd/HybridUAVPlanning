@@ -13,8 +13,9 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
     # Nvec = [50:50:2000; 3000:1000:20000]
     Nvec = [50:500:2000; 2000:1000:20000]
+    Nvecwhole = [50:500:2000; 2000:1000:20000]
     nidx = 0
-    Nstart > 1900 && (nidx = findall(x->x==Nstart, Nvec)[1] - 1)
+    Nstart > 1900 && (nidx = findall(x->x==Nstart, Nvec)[1] - 1; Nvec = Nstart:1000:20000)
 
 
     if algo == "label"
@@ -70,13 +71,13 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
             printstyled("\n STOPPED EARLY \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)        
-            n = Nvec[nidx]
-            @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" Nvec[nidx] #save where we ended early.....
+            n = Nvecwhole[nidx]
+            @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
         end
     end
     printstyled("\n SOLVED --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
-    n = Nvec[end]
+    n = Nvecwhole[end]
     @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n
 end 
 
