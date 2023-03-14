@@ -15,7 +15,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     Nvec = [50:500:2000; 2000:1000:20000]
     Nvecwhole = [50:500:2000; 2000:1000:20000]
     nidx = 0
-    Nstart > 1900 && (nidx = findall(x->x==Nstart, Nvec)[1] - 1; Nvec = Nstart:1000:20000)
+    Nstart > 1900 && (nidx = findall(x->x==Nstart, Nvec)[1] - 1); Nvec = Nstart:1000:20000)
 
 
     if algo == "label"
