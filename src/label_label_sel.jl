@@ -43,7 +43,7 @@ function hybrid_label_selection(def::EucGraphInt; heur::String = "astar")
         return return 0,[0], Bool.([0])
     end
     if heur_label!(S) == 2^63 - 1     
-        return 0,[0], Bool.([0])
+        return -1,[0], Bool.([0])
     end
     
     Q = MutableBinaryMinHeap([   (heur_label!(S) + 0, [0, Bstart, Qstart, S,    S,1,    1,1,   heur_label!(S) + 0]) ] )

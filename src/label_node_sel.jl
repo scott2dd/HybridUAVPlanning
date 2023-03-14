@@ -38,7 +38,7 @@ function hybrid_node_selection(def::EucGraphInt; heur::String = "astar")
         return 0,[0], Bool.([0])
     end
     if heur_label!(S) == 2^63-1     
-        return 0,[0], Bool.([0])
+        return -1,[0], Bool.([0])
     end
     node_queue = fill(Inf, N) # keep track of minimum candidate label
     node_queue[S] = 0+heur_label!(S)  #init node_queue with cost for S
