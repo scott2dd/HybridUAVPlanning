@@ -69,6 +69,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
             printstyled("\n STOPPED EARLY \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)        
+            n = Nvec[nidx]
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" Nvec[nidx] #save where we ended early.....
             return 0
         end
