@@ -13,7 +13,8 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
     # Nvec = [50:50:2000; 3000:1000:20000]
     Nvec = [50:500:2000; 2000:1000:20000]
-    Nstart > 1900 && (Nvec = Nstart:1000:20000)
+    nidx = 0
+    Nstart > 1900 && (nidx = findall(x->x==Nstart, Nvec)   Nvec = Nstart:1000:20000)
 
 
     if algo == "label"
@@ -51,7 +52,6 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     tdp = @elapsed cost, path, gen = algof(euc_inst, heur = heur)
     
     printstyled("\n Solving Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) \n ", color=:light_green)
-    nidx = 0
     for n in Nvec
         nidx += 1
         printstyled("N = $(n) \n", color = :light_green)
