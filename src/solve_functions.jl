@@ -9,10 +9,12 @@ Input:  algo::"node" or "label:
         Need to incorporate a time limit to terminate... if problems are taking too long we just end it early (don't go to end of Nvec)
         Then save last size we finished at....
 """
-function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "astar", tlim = 3600)
+function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "astar", tlim = 3600, Nstart = 50)
     # Nvec = [30:40:200; 2000:100:10000; 10000:1000:10000]
     # Nvec = [50:50:2000; 3000:1000:20000]
     Nvec = [50:500:2000; 2000:1000:20000]
+    Nstart >1900 50 && (Nvec = Nstart:1000:20000)
+
 
     if algo == "label"
         algof = hybrid_label_selection
@@ -52,6 +54,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     for n in Nvec
         printstyled("N = $(n) \n", color = :light_green)
         times_vec = Float64[]
+        Zbreak_count = 0
         for k = 1:10
             print("  k = $(k): ")
             @load "Problems\\$(prob)\\$(n)$(conn)_$(k)" euc_inst 
@@ -59,8 +62,10 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
             println(" $(tdp)")
             @save "Solutions\\$(prob)\\$(n)$(conn)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(times_vec, tdp)
+            cost == 0 && (Zbreak_count += 1)
+            Zbreak_count > 3 && break
         end
-        if mean(times_vec) > tlim
+        if mean(times_vec) > tlim || Zbreak_count > 3
             printstyled("\n STOPPED EARLY \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)        
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
@@ -121,6 +126,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
     for n in Nvec
         printstyled("N = $(n) \n", color = :light_green)
         times_vec = Float64[]
+        Zbreak_count = 0
         for k = 1:10
             print("  k = $(k): ")
             @load "Problems\\$(prob)\\$(n)_$(k)" lattice_inst
@@ -128,8 +134,10 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
             println(" $(tdp) ")
             @save "Solutions\\$(prob)\\$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(time_vec, tdp)
+            cost == 0 && (Zbreak_count += 1)
+            Zbreak_count > 3 && break
         end
-        if mean(times_vec) > tlim
+        if mean(times_vec) > tlim || Zbreak_count > 3
             printstyled("\n STOPPED EARLY \n --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)        
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
