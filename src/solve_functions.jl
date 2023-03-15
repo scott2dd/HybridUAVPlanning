@@ -70,10 +70,10 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
             printstyled("\n STOPPED EARLY \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red) 
-            if mean(times_vec) > tlim 
-                nwholeidx = findall(x->x==n, Nvecwhole)[1] 
-            elseif Zbreak_count > 3
+            if Zbreak_count > 3
                 nwholeidx = findall(x->x==n, Nvecwhole)[1] - 1
+            elseif mean(times_vec) > tlim 
+                nwholeidx = findall(x->x==n, Nvecwhole)[1] 
             end
             n = Nvecwhole[nwholeidx]
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
@@ -151,10 +151,10 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
             printstyled("\n STOPPED EARLY \n --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)        
-            if mean(times_vec) > tlim 
-                nwholeidx = findall(x->x==n, Nvecwhole)[1] 
-            elseif Zbreak_count > 3
+            if Zbreak_count > 3
                 nwholeidx = findall(x->x==n, Nvecwhole)[1] - 1
+            elseif mean(times_vec) > tlim 
+                nwholeidx = findall(x->x==n, Nvecwhole)[1] 
             end
             n = Nvecwhole[nwholeidx]
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
