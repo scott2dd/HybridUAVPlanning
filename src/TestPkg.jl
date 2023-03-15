@@ -1,5 +1,7 @@
 module TestPkg
-
+@warn("This package is deprecated.  Use HybridUAVPlanning.jl instead:
+           pkg> update
+           pkg> add NEWNAME")
 
 using LinearAlgebra
 using DataStructures
