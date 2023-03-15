@@ -8,6 +8,10 @@
 
 
 ##############################################
+"""
+    input EucGraphInt instance
+    heur - optional argument: "euc" or "astar" (manhattan not working right now)
+"""
 function hybrid_label_selection(def::EucGraphInt; heur::String = "astar") 
     S, E, Alist, F, C, Z = def.S, def.E, def.Alist, def.F, def.C, def.Z
     Bstart, Qstart = def.B0, def.Q0
@@ -39,7 +43,7 @@ function hybrid_label_selection(def::EucGraphInt; heur::String = "astar")
         return return 0,[0], Bool.([0])
     end
     if heur_label!(S) == 2^63 - 1     
-        return 0,[0], Bool.([0])
+        return -1,[0], Bool.([0])
     end
     
     Q = MutableBinaryMinHeap([   (heur_label!(S) + 0, [0, Bstart, Qstart, S,    S,1,    1,1,   heur_label!(S) + 0]) ] )
@@ -161,7 +165,7 @@ function hybrid_label_selection(def::EucGraphInt; heur::String = "astar")
             end
         end
         z+=1
-        z == 200_000 && (printstyled("Z BREAK... @Z=$(z)\n", color=:light_red); break)
+        z == 200_000 && (printstyled("ZBREAK@$(z)", color=:light_red); break)
         # z%500 == 0 && ProgressMeter.next!(prog)
     end
     return 0,[0], Bool.([0])

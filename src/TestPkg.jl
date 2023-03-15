@@ -1,5 +1,7 @@
 module TestPkg
-
+@warn("This package is deprecated.  Use HybridUAVPlanning.jl instead:
+           pkg> update
+           pkg> add NEWNAME")
 
 using LinearAlgebra
 using DataStructures
@@ -92,6 +94,16 @@ export solve_gen_optimal_control
 
 export solve_euc
 export solve_lattice
+
+
+"""test function.  Writing documentation.  Then commiting and syncing. Then updating TestPkg#master from Pkg environment
+    to get new update, need to restart REPL then ] up package then > use package
+    Need to add documentation to all functions....  or at least main ones.
+"""
+function foo()
+    return 0
+end
+export foo
 #do precompiles later? This gives an error when doing auto-Julia-Pkg.jl precompilation.....
 # precompile(hybrid_label_selection)
 # precompile(hybrid_node_selection)
