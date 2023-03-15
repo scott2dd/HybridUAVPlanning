@@ -69,7 +69,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
             Zbreak_count > 3 && (nidx -= 1;  break) 
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
-            printstyled("\n STOPPED EARLY \n --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red) 
+            printstyled("\n STOPPED EARLY || Euclidean $(dims) || h(i): $(heur) || $(algo) \n", color=:light_red) 
             if Zbreak_count > 3
                 nwholeidx = findall(x->x==n, Nvecwhole)[1] - 1
             elseif mean(times_vec) > tlim 
@@ -80,7 +80,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
             return 0
         end
     end
-    printstyled("\n SOLVED --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
+    printstyled("\n SOLVED --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_green)
     n = Nvecwhole[end]
     @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n
 end 
@@ -150,7 +150,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
             Zbreak_count > 3 && (nidx -= 1;  break) 
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
-            printstyled("\n STOPPED EARLY \n --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)        
+            printstyled("\n STOPPED EARLY || Euclidean $(dims) || h(i): $(heur) || $(algo) \n", color=:light_red) 
             if Zbreak_count > 3
                 nwholeidx = findall(x->x==n, Nvecwhole)[1] - 1
             elseif mean(times_vec) > tlim 
