@@ -1,6 +1,6 @@
-using TestPkg
+using HybridUAVPlanning
 using Test
 
-@testset "TestPkg.jl" begin
+@testset "HybridUAVPlanning.jl" begin
     # Write your tests here.
 end
