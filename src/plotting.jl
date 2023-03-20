@@ -200,8 +200,7 @@ function get_stacked_plots(Nvecs, times, avg_times; labels = ["NODE", "LABEL"], 
         Guide.xlabel(""),
         Guide.ylabel(" Mean Time to Solve (s)"),
         Theme(key_position = :right),
-        Guide.manual_color_key("", [labels[1], labels[2]], [colors[1], colors[2]]),
-    )
+        Guide.manual_color_key("", [labels[1], labels[2]], [colors[1], colors[2]]))
 
     bplt1 = get_boxplot_plt(Nvecs[1], times[1], color = colors[1], xlabel = "") 
     bplt2 = get_boxplot_plt(Nvecs[2], times[2], color = colors[2], xlabel = "") 
