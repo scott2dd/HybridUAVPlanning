@@ -324,6 +324,7 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
                 times[nidx,k] = time_i
             catch #if here, then we are at the end of saved prolems... return up to the prior Nidx....
                 return times[1:nidx-1], avg_times[1:nidx-1], Nvec[1:nidx-1]
+            end
         end
         avg_times[nidx] = mean(times[nidx,:])
     end
