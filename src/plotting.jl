@@ -215,6 +215,7 @@ function get_boxplot_plt(Nvec::Vector{Int64}, times::Matrix{Float64}; color::Str
                 Theme(default_color = color, highlight_width = 0pt, middle_color = fcolor, middle_width = 0.5pt))
     return plt
 end
+
 function fcolor(color)
     return colorant"white"
 end
