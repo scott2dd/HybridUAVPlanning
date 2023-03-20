@@ -63,8 +63,7 @@ export get_sol_vec
 export get_pathlength_vec
 export get_avg_layer
 export get_boxplot_plt 
-export plot_euc_graph
-export plot_euc_graph_solution
+export get_stacked_plots
 
 
 export get_OCV_func
