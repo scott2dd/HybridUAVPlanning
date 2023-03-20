@@ -191,7 +191,24 @@ function plot_euc_graph_solution(euc_inst::EucGraph; label_strings::Vector{Strin
 
 end
 
+function get_stacked_plots(Nvecs, times, avg_times; labels = ["NODE", "LABEL"], colors = ["red", "grey"], plot_sizes = [20cm, 30cm])
+    avg_plt = plot(
+        layer(x = Nvecs[1], y = avg_times[1], Geom.line, Geom.point, Theme(default_color = colors[1])),
+        layer(x = Nvecs[2], y = avg_times[2], Geom.line, Geom.point, Theme(default_color = colors[2])),
+        Scale.y_log10,
+        Scale.x_continuous(format= :plain),
+        Guide.xlabel(""),
+        Guide.ylabel(" Mean Time to Solve (s)"),
+        Theme(key_position = :right),
+        Guide.manual_color_key("", [labels[1], labels[2]], [colors[1], colors[2]]),
+    )
 
+    bplt1 = get_boxplot_plt(Nvecs[1], times[1], color = colors[1], xlabel = "") 
+    bplt2 = get_boxplot_plt(Nvecs[2], times[2], color = colors[2], xlabel = "") 
+    set_default_plot_size(plot_sizes[1], plot_sizes[2])
+    stacked = vstack(avg_plt, bplt1, bplt2)
+    return stacked
+end
 
 function get_boxplot_plt(Nvec::Vector{Int64}, times::Matrix{Float64}; color::String = "blue", xlabel::String="", xmax::Float64 = float(Nvec[end]))
     K = size(times,2)
@@ -284,26 +301,35 @@ function plot_hybrid_soln(mapdef, path, genY)
 end
 
 
-function get_sol_vec(Nvec, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
+function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
+    if prob_type == "euc"
+        Nvec = [50:500:2000; 2000:1000:20000]
+    elseif prob_type == "lattice"
+        Nvec = 5:50
+    end
     times = zeros(length(Nvec),K)
     avg_times = zeros(length(Nvec))
+
     nidx = 0
     for n in Nvec
         nidx += 1
         for k = 1:K
-            if prob == "MILP"
-                @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)" tMILP
-                time_i = tMILP
-            else
-                @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)$(heur)" tdp
-                time_i = tdp
-            end
-            times[nidx,k] = time_i
+            try
+                if prob == "MILP"
+                    @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)" tMILP
+                    time_i = tMILP
+                else
+                    @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)$(heur)" tdp
+                    time_i = tdp
+                end
+                times[nidx,k] = time_i
+            catch #if here, then we are at the end of saved prolems... return up to the prior Nidx....
+                return times[1:nidx-1], avg_times[1:nidx-1], Nvec[1:nidx-1]
         end
         avg_times[nidx] = mean(times[nidx,:])
     end
 
-    return times, avg_times
+    return times, avg_times, Nvec
 end
 
 
@@ -326,3 +352,4 @@ function get_avg_layer(Ncec, avg_times; color_in = "grey")
     layer_out = layer(x = Nvec, y = avg_times, Geom.point, Theme(default_color = color_in))
     return layer_out
 end
+
