@@ -192,24 +192,25 @@ function plot_euc_graph_solution(euc_inst::EucGraph; label_strings::Vector{Strin
 end
 
 function get_stacked_plots(Nvecs, times, avg_times; labels = ["NODE", "LABEL"], colors = ["red", "grey"], plot_sizes = [20cm, 30cm])
+    xmax = maximum([Nvecs[1][end], Nvecs[2][end]])
     avg_plt = plot(
         layer(x = Nvecs[1], y = avg_times[1], Geom.line, Geom.point, Theme(default_color = colors[1])),
         layer(x = Nvecs[2], y = avg_times[2], Geom.line, Geom.point, Theme(default_color = colors[2])),
         Scale.y_log10,
-        Scale.x_continuous(format= :plain),
+        Scale.x_continuous(format= :plain, maxvalue = xmax),
         Guide.xlabel(""),
         Guide.ylabel(" Mean Time to Solve (s)"),
-        Theme(key_position = :right),
+        Theme(key_position = :top),
         Guide.manual_color_key("", [labels[1], labels[2]], [colors[1], colors[2]]))
 
-    bplt1 = get_boxplot_plt(Nvecs[1], times[1], color = colors[1], xlabel = "") 
-    bplt2 = get_boxplot_plt(Nvecs[2], times[2], color = colors[2], xlabel = "") 
+    bplt1 = get_boxplot_plt(Nvecs[1], times[1], color = colors[1], xlabel = "", xmax = xmax) 
+    bplt2 = get_boxplot_plt(Nvecs[2], times[2], color = colors[2], xlabel = "Number of Nodes", xmax = xmax) 
     set_default_plot_size(plot_sizes[1], plot_sizes[2])
     stacked = vstack(avg_plt, bplt1, bplt2)
     return stacked
 end
 
-function get_boxplot_plt(Nvec::Vector{Int64}, times::Matrix{Float64}; color::String = "blue", xlabel::String="", xmax::Float64 = float(Nvec[end]))
+function get_boxplot_plt(Nvec::Vector{Int64}, times::Matrix{Float64}; color::String = "blue", xlabel::String="", xmax::Int64 = Nvec[end])
     K = size(times,2)
     instance = collect(1:K)
 
@@ -304,7 +305,7 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
     if prob_type == "euc"
         Nvec = [50:500:2000; 2000:1000:20000]
     elseif prob_type == "lattice"
-        Nvec = 5:50
+        Nvec = Vector(5:50)
     end
     times = zeros(length(Nvec),K)
     avg_times = zeros(length(Nvec))
@@ -323,7 +324,7 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
                 end
                 times[nidx,k] = time_i
             catch #if here, then we are at the end of saved prolems... return up to the prior Nidx....
-                return times[1:nidx-1], avg_times[1:nidx-1], Nvec[1:nidx-1]
+                return times[1:nidx-1, :], avg_times[1:nidx-1], Nvec[1:nidx-1]
             end
         end
         avg_times[nidx] = mean(times[nidx,:])

@@ -32,11 +32,12 @@ Give an OCP::OptControlProb, path and gen
 Output:
 out::OptControlSolution
 """
+
 function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen::Vector{Bool}; linear = true)
     myModel = Model(Ipopt.Optimizer)
     try register(myModel, :atan, 2, atan; autodiff = true) catch end# register atan as JuMP function 
     set_silent(myModel)
-
+    
     N = length(path) # make u[1] = 0... but need length(path) for indexing wrt path
     tf = 1 #assume path takes 1 second
     dt = (tf)/(N-1)
@@ -45,7 +46,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     C,Z,GFlipped = OCP.C, OCP.Z, OCP.GFlipped
 
     g_min,g_max = 0, OCP.Q0     # Bounds on the States
-    b_min, b_max = 0, OCP.Bmax  
+    b_min, b_max = 6, OCP.Bmax  
     
     u_min, u_max = 0, 1     # Bounds on Control
 
@@ -62,46 +63,24 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
 
     noiseR_along_path = [!OCP.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)]
     pushfirst!(noiseR_along_path, 0)
-    ṁ_normed(x) = (86u^2 + 8.3u + 0.083)*[Z_ij]/94.383 
+    mdot_normed(uu,Z) = (86uu^2 + 8.3*uu + 0.083)*Z/94.383 #from http://dx.doi.org/10.1051/matecconf/201925206009
+    register(myModel, :mdot_normed, 2, mdot_normed, autodiff = true)
+    obV = get_one_by_Vsp()
+    Λ(b,Pij) = obV(b,Pij)/obV(100,0)
+    Pijmax = maximum(nonzeros(Z) .- nonzeros(C))
     for timei in 2:N
         nodej = path[timei]
         nodei = path[timei-1]
-        
         if linear
             @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
-            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])                #simple linear updates.....
+            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         else
-
-            # ṁ = .0086x^2 + 0.083x + 0.083 - x is [0,100]
-            #from http://dx.doi.org/10.1051/matecconf/201925206009
-            # ṁ = 86x^2 + 8.3x + 0.083      - x is [0.,1]
-            # ṁ for out problem: need to take this quadratic structure and map to our values....
-            # z_ij:  consume 32 units of fuel for 16 units of distance, assume constnat speed and this is at full throttle.....
-            # then we need to get quadratic mapping using above curve....
-            #ṁ = (86u^2 + 8.3u + 0.083)*[Z_ij]/94.383  - x is [0.,1], max fuel burn rate @ u = 1, 0 @quad interp between 
-            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej]*ṁ_normed(u))                
-            
-            #now need to make constraints for better battery model..... can reuse battery.jl work... just use riemman7 update func 
-            @variable(myModel, U[1:N]) #hysterisis term...
-            
-            
-            fix(U[1], 0, force = true)
-            Cmax = 9000
-            Req = 70/1000
-            C2 = 3000 
-            τ = R1*C2
-            OCV, min, max = get_OCV_func()
-            
-            Uk1 = exp(-Δ/τ)*Uk + Req*(1 - exp(-Δ/τ))*P/Vk
-            Vk1 = OCV(S) - Uk1
-            
-
-            #so we need to get net power, calculate Uk1 and Vk1, then get ΔSOC
-            S -= P/(Cmax*Vk1)*Δ*100
-            
-            @constraint(myModel, b[timei] == b[timei-1] - P/(Cmax*Vk1)*(timei) + C[nodei,nodej] + u[timei]*Z[nodei,nodej]*ṁ_normed(u)) #need to change u*Z*f(u) term.... how does battery charge change wrt to load? we can combine C and Z terms to map into net ΔSOC?
+            Pnormed(uu) = 20*(Z[nodei,nodej]*uu - C[nodei, nodej])/Pijmax
+            register(myModel, :Pnormed, 1, Pnormed, autdodiff=true)
+            register(myModel, :Λ, 2, Λ)
+            @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej]*mdot_normed(u[timei], Z[nodei,nodej]))
+            @NLconstraint(myModel, b[timei] == b[timei-1] +  (Z[nodei,nodej]*u[timei] - C[nodei, nodej])*Λ(b[timei], Pnormed(u[timei])))
         end
-        
         @constraint(myModel, u[timei] <= noiseR_along_path[timei]) #noise restrictions
     end
 
@@ -115,7 +94,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     # solution_summary(myModel)       # Provide a summary of the solution
     
     # --- Store Solution from Optimal Control Search --- #
-    u_star, b_star, g_star = value.(u)[:], value.(b)[:], value.(g)[:]     # Store off the Optimal Control
+    u_star, b_star, g_star = value.(u)[:], value.(b)[:], value.(g)[:]
     t_star = LinRange(0,tf,N) # Store off the Time Vector
 
     sol_out = OptControlSolution(OCP.locs, OCP.C, OCP.Z, OCP.F, path, u_star, t_star, b_star, g_star, noiseR_along_path, OCP.tag, time_to_solve)
@@ -206,3 +185,12 @@ function ezDynamics!(dx,x,p,t)
         dx[2] = D_Y_coord
     end
 
+# ##
+# using JuMP, Ipopt
+# myModel = Model(Ipopt.Optimizer)
+# # Pnormed(uu) = 20*(2*uu - 1)/Pijmax
+# Z = rand(10,10)
+# C = rand(10,10)
+# nodei, nodej = 1,2
+# Pnormed(uu) = 20*(Z[nodei,nodej]*uu - C[nodei, nodej])/Pijmax
+# register(myModel, :Pnormed, 1, Pnormed, autodiff=true)
