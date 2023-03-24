@@ -10,7 +10,6 @@ struct OptControlProb
     B0::Float64
     tag::String
 end
-
 struct OptControlSolution
     locs::Matrix{Float64}
     C::SparseMatrixCSC{Int64}
@@ -32,7 +31,6 @@ Give an OCP::OptControlProb, path and gen
 Output:
 out::OptControlSolution
 """
-
 function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen::Vector{Bool}; linear = true)
     myModel = Model(Ipopt.Optimizer)
     try register(myModel, :atan, 2, atan; autodiff = true) catch end# register atan as JuMP function 
@@ -46,7 +44,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     C,Z,GFlipped = OCP.C, OCP.Z, OCP.GFlipped
 
     g_min,g_max = 0, OCP.Q0     # Bounds on the States
-    b_min, b_max = 6, OCP.Bmax  
+    b_min, b_max = 6, 1000*OCP.Bmax  
     
     u_min, u_max = 0, 1     # Bounds on Control
 
@@ -57,17 +55,23 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         u_min  ≤ u[1:N] ≤ u_max      # generator setting
     end)
 
-    fix(b[1], OCP.B0; force = true)  
+    fix(b[1], 1000*OCP.B0; force = true)  
     fix(g[1], OCP.Q0; force = true)  
     fix(u[1], 0;  force = true)  
 
     noiseR_along_path = [!OCP.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)]
     pushfirst!(noiseR_along_path, 0)
-    mdot_normed(uu,Z) = (86uu^2 + 8.3*uu + 0.083)*Z/94.383 #from http://dx.doi.org/10.1051/matecconf/201925206009
+
+    mdot_normed(uu,Zz) = (86uu^2 + 8.3*uu + 0.083)*Zz/94.383 #from http://dx.doi.org/10.1051/matecconf/201925206009
     register(myModel, :mdot_normed, 2, mdot_normed, autodiff = true)
+        
     obV = get_one_by_Vsp()
-    Λ(b,Pij) = obV(b,Pij)/obV(100,0)
     Pijmax = maximum(nonzeros(Z) .- nonzeros(C))
+    Pnormed(u,i,j) = 20*(Z[i,j]*u - C[i, j])/Pijmax
+    Λ(b,Pij) = obV(b,Pij)/obV(100,0)
+
+    register(myModel, :Λ, 2, Λ, autodiff=true)
+    register(myModel, :Pnormed, 3, Pnormed, autodiff=true)
     for timei in 2:N
         nodej = path[timei]
         nodei = path[timei-1]
@@ -75,11 +79,8 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
             @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         else
-            Pnormed(uu) = 20*(Z[nodei,nodej]*uu - C[nodei, nodej])/Pijmax
-            register(myModel, :Pnormed, 1, Pnormed, autdodiff=true)
-            register(myModel, :Λ, 2, Λ)
             @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej]*mdot_normed(u[timei], Z[nodei,nodej]))
-            @NLconstraint(myModel, b[timei] == b[timei-1] +  (Z[nodei,nodej]*u[timei] - C[nodei, nodej])*Λ(b[timei], Pnormed(u[timei])))
+            @NLconstraint(myModel, b[timei] == b[timei-1] +  (Z[nodei,nodej]*u[timei] - C[nodei, nodej])*Λ(b[timei], Pnormed(u[timei],nodei,nodej)  ))
         end
         @constraint(myModel, u[timei] <= noiseR_along_path[timei]) #noise restrictions
     end
@@ -185,12 +186,4 @@ function ezDynamics!(dx,x,p,t)
         dx[2] = D_Y_coord
     end
 
-# ##
-# using JuMP, Ipopt
-# myModel = Model(Ipopt.Optimizer)
-# # Pnormed(uu) = 20*(2*uu - 1)/Pijmax
-# Z = rand(10,10)
-# C = rand(10,10)
-# nodei, nodej = 1,2
-# Pnormed(uu) = 20*(Z[nodei,nodej]*uu - C[nodei, nodej])/Pijmax
-# register(myModel, :Pnormed, 1, Pnormed, autodiff=true)
+
