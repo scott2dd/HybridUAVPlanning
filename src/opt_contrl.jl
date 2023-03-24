@@ -33,7 +33,6 @@ out::OptControlSolution
 """
 function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen::Vector{Bool}; linear = true)
     myModel = Model(Ipopt.Optimizer)
-    try register(myModel, :atan, 2, atan; autodiff = true) catch end# register atan as JuMP function 
     set_silent(myModel)
     
     N = length(path) # make u[1] = 0... but need length(path) for indexing wrt path
@@ -44,9 +43,12 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     C,Z,GFlipped = OCP.C, OCP.Z, OCP.GFlipped
 
     g_min,g_max = 0, OCP.Q0     # Bounds on the States
-    b_min, b_max = 6, 1000*OCP.Bmax  
+    b_min, b_max = 6, 99.9
     
     u_min, u_max = 0, 1     # Bounds on Control
+
+    noiseR_along_path = [!OCP.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)]
+    pushfirst!(noiseR_along_path, 0)
 
     @JuMP.variables(myModel, begin
         # dt ≥ 0, (start = dt_guess) # Delta T for time steps
@@ -55,34 +57,36 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         u_min  ≤ u[1:N] ≤ u_max      # generator setting
     end)
 
-    fix(b[1], 1000*OCP.B0; force = true)  
+    fix(b[1], OCP.B0; force = true)  
     fix(g[1], OCP.Q0; force = true)  
     fix(u[1], 0;  force = true)  
 
-    noiseR_along_path = [!OCP.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)]
-    pushfirst!(noiseR_along_path, 0)
+
 
     mdot_normed(uu,Zz) = (86uu^2 + 8.3*uu + 0.083)*Zz/94.383 #from http://dx.doi.org/10.1051/matecconf/201925206009
     register(myModel, :mdot_normed, 2, mdot_normed, autodiff = true)
         
     obV = get_one_by_Vsp()
     Pijmax = maximum(nonzeros(Z) .- nonzeros(C))
-    Pnormed(u,i,j) = 20*(Z[i,j]*u - C[i, j])/Pijmax
-    Λ(b,Pij) = obV(b,Pij)/obV(100,0)
+    Pnormed(u,Zij,Cij) = 20*(Zij*u - Cij)/Pijmax
+    Λ(b,Pij) = obV(b,abs(Pij))/obV(100,0)
 
     register(myModel, :Λ, 2, Λ, autodiff=true)
     register(myModel, :Pnormed, 3, Pnormed, autodiff=true)
+    register(myModel, :sign, 1, sign, autodiff=true)
     for timei in 2:N
         nodej = path[timei]
         nodei = path[timei-1]
+        @constraint(myModel, u[timei] <= noiseR_along_path[timei]) #noise restrictions
+
         if linear
             @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         else
             @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej]*mdot_normed(u[timei], Z[nodei,nodej]))
-            @NLconstraint(myModel, b[timei] == b[timei-1] +  (Z[nodei,nodej]*u[timei] - C[nodei, nodej])*Λ(b[timei], Pnormed(u[timei],nodei,nodej)  ))
+            @NLconstraint(myModel, b[timei] == b[timei-1] +  (Z[nodei,nodej]*u[timei] - C[nodei, nodej])*Λ(b[timei], Pnormed(u[timei], Z[nodei,nodej], C[nodei,nodej]) ) *sign(Pnormed(u[timei], Z[nodei,nodej], C[nodei,nodej])))
         end
-        @constraint(myModel, u[timei] <= noiseR_along_path[timei]) #noise restrictions
+        
     end
 
     # @objective(myModel, Max, b[n]) #maximize final battery
@@ -97,7 +101,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     # --- Store Solution from Optimal Control Search --- #
     u_star, b_star, g_star = value.(u)[:], value.(b)[:], value.(g)[:]
     t_star = LinRange(0,tf,N) # Store off the Time Vector
-
+    u_star[ustar .< 0] .= 0
     sol_out = OptControlSolution(OCP.locs, OCP.C, OCP.Z, OCP.F, path, u_star, t_star, b_star, g_star, noiseR_along_path, OCP.tag, time_to_solve)
     return sol_out   
 end
