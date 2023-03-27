@@ -87,10 +87,13 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         else
             @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej]*mdot_normed(u[timei], Z[nodei,nodej]))
             @NLconstraint(myModel, b[timei] == b[timei-1] +  (Z[nodei,nodej]*u[timei] - C[nodei, nodej])*Λ(b[timei], Pnormed(u[timei], Z[nodei,nodej], C[nodei,nodej]) ) *sign(Pnormed(u[timei], Z[nodei,nodej], C[nodei,nodej])))
+            # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
+            # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
+
         end
         
     end
-    @constraint(myModel,[i=2:N], u[timei] <= noiseR_along_path[timei]) #noise restrictions
+    @constraint(myModel,[timei=2:N], u[timei] <= noiseR_along_path[timei]) #noise restrictions
     # @objective(myModel, Max, b[n]) #maximize final battery
     Zvec = [Z[path[i-1],path[i]]  for i = 2:N]
     @objective(myModel, Min, sum(u[t]*Z[path[t-1],path[t]] for t=2:N)) #minumize fuel use
