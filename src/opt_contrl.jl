@@ -47,7 +47,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     
     u_min, u_max = 0, 1     # Bounds on Control
 
-    noiseR_along_path = [!OCP.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)]
+    noiseR_along_path = Float64.([!OCP.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)])
     pushfirst!(noiseR_along_path, 0)
 
     @JuMP.variables(myModel, begin
@@ -74,10 +74,12 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     register(myModel, :Λ, 2, Λ, autodiff=true)
     register(myModel, :Pnormed, 3, Pnormed, autodiff=true)
     register(myModel, :sign, 1, sign, autodiff=true)
+
     for timei in 2:N
         nodej = path[timei]
         nodei = path[timei-1]
-        @constraint(myModel, u[timei] <= noiseR_along_path[timei]) #noise restrictions
+        
+        # println(noiseR_along_path[timei])
 
         if linear
             @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
@@ -88,7 +90,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         end
         
     end
-
+    @constraint(myModel,[i=2:N], u[timei] <= noiseR_along_path[timei]) #noise restrictions
     # @objective(myModel, Max, b[n]) #maximize final battery
     Zvec = [Z[path[i-1],path[i]]  for i = 2:N]
     @objective(myModel, Min, sum(u[t]*Z[path[t-1],path[t]] for t=2:N)) #minumize fuel use
@@ -101,7 +103,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     # --- Store Solution from Optimal Control Search --- #
     u_star, b_star, g_star = value.(u)[:], value.(b)[:], value.(g)[:]
     t_star = LinRange(0,tf,N) # Store off the Time Vector
-    u_star[ustar .< 0] .= 0
+    u_star[u_star .<= 0] .= 0
     sol_out = OptControlSolution(OCP.locs, OCP.C, OCP.Z, OCP.F, path, u_star, t_star, b_star, g_star, noiseR_along_path, OCP.tag, time_to_solve)
     return sol_out   
 end
