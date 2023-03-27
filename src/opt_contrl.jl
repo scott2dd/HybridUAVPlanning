@@ -57,7 +57,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         u_min  ≤ u[1:N] ≤ u_max      # generator setting
     end)
 
-    fix(b[1], OCP.B0; force = true)  
+    fix(b[1], b_max; force = true)  
     fix(g[1], OCP.Q0; force = true)  
     fix(u[1], 0;  force = true)  
 
