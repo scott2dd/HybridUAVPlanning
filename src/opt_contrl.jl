@@ -67,7 +67,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     register(myModel, :mdot_normed, 2, mdot_normed, autodiff = true)
         
     obV = get_one_by_Vsp()
-    Pijmax = maximum(nonzeros(Z) .- nonzeros(C))
+    Pijmax = maximum(nonzeros(Z) .- nonzeros(C))*1.01
     Pnormed(u,Zij,Cij) = 20*(Zij*u - Cij)/Pijmax
     Λ(b,Pij) = obV(b,abs(Pij))/obV(100,0)
 
