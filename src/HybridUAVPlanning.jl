@@ -87,6 +87,9 @@ export OptControlSolution
 export MILP_to_opt_ctrl
 export get_tag
 export solve_gen_optimal_control
+export C_time_discretized
+export noiseR_to_interval_sets
+export get_noise_i
 
 
 export solve_euc
