@@ -78,9 +78,6 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     for timei in 2:N
         nodej = path[timei]
         nodei = path[timei-1]
-        
-        # println(noiseR_along_path[timei])
-
         if linear
             @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
@@ -89,10 +86,9 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
             @NLconstraint(myModel, b[timei] == b[timei-1] +  (Z[nodei,nodej]*u[timei] - C[nodei, nodej])*Λ(b[timei], Pnormed(u[timei], Z[nodei,nodej], C[nodei,nodej]) ) *sign(Pnormed(u[timei], Z[nodei,nodej], C[nodei,nodej])))
             # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
-
         end
-        
     end
+    
     @constraint(myModel,[timei=2:N], u[timei] <= noiseR_along_path[timei]) #noise restrictions
     # @objective(myModel, Max, b[n]) #maximize final battery
     Zvec = [Z[path[i-1],path[i]]  for i = 2:N]
@@ -196,3 +192,80 @@ function ezDynamics!(dx,x,p,t)
     end
 
 
+"""
+gets noise restrictions as a vector of intervals, each labeled with 0 or 1 
+0: no gen
+1: gen allowed
+"""
+function noiseR_to_interval_sets(noise_along_path)
+    intervals = []
+    start_time = 0
+    start_val  = noise_along_path[1]
+    for i in 1:length(noise_along_path)
+        if noise_along_path[i] == start_val 
+            continue
+        else #if different, then 
+            end_time = (i-1)/length(noise_along_path)
+            push!(intervals, (start_val,[start_time, end_time]))
+            start_time = (i-1)/length(noise_along_path)
+            start_val = noise_along_path[i]
+            if i == length(noise_along_path) #if last is its own chunk, add manually
+                push!(intervals, (start_val,[start_time, 1]))
+            end
+        end
+    end
+    return intervals
+end
+
+
+"""
+Give a param matrix, and the MILP path.  Give new number of time points.
+Outputs vector of param values over path with new time points.
+"""
+function C_time_discretized(C, path::Vector{Int64}, number_timepoints_new::Int64)
+    C_new = zeros(number_timepoints_new-1) #time[1] = 0....
+    C_path = [C[path[idx-1],path[idx]] for idx in 2:length(path)]
+    
+    Δorig = 1/(length(path)-1)
+    Δnew = 1/(number_timepoints_new-1)
+    time_orig = 0:Δorig:1
+    time_new = 0:Δnew:1
+    at_prior = 0
+    at_prior_orig_time = time_orig[time_orig .<= at_prior][end]
+    for i in 2:(length(time_new))-1
+        at_now = time_new[i]
+        at_now_orig_time = time_orig[time_orig .<= at_now][end]
+
+        if at_now_orig_time == at_prior_orig_time #then we are in same time chunk for all time, so just get weighted chunk (normalized time)
+            idx_i = Int(at_now_orig_time*(length(path)-1)) +1 #time zero is path[1]
+            idx_j = idx_i + 1
+            nodei, nodej = path[idx_i], path[idx_j]
+            println((nodei,nodej))
+            C_new[i-1] = (Δnew/Δorig)*C[nodei, nodej]
+        else #else we do a weighted average....
+            t1 = at_now - at_now_orig_time
+            t2 = at_now_orig_time - at_prior
+            
+            idx_i = Int(at_prior_orig_time*(length(path)-1))+1
+            idx_j = idx_i + 1
+            nodei, nodej = path[idx_i], path[idx_j]
+            C2bar = C[nodei, nodej]*(t2/Δorig)
+
+            idx_i = Int(at_now_orig_time*(length(path)-1)) + 1
+            idx_j = idx_i + 1
+            nodei, nodej = path[idx_i], path[idx_j]
+            C1bar = C[nodei, nodej]*(t1/Δorig)
+            println((nodei,nodej))
+
+
+            
+            C_new[i-1] = C1bar + C2bar
+        end
+        at_prior = at_now
+        at_prior_orig_time = time_orig[time_orig .<= at_prior][end]
+    end
+    # if C_new[end] == 0
+    C_new[end] = (Δnew/Δorig)*C[path[end-1], path[end]] 
+    # end
+    return C_new
+end
