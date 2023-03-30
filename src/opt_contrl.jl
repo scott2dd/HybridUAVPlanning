@@ -1,4 +1,4 @@
-#this comment was added on laptop.  Test to see if git pushing between machines is working!
+#added on laptop... 3/30
 struct OptControlProb
     locs::Matrix{Float64}
     C::SparseMatrixCSC{Int64}
