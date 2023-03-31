@@ -31,7 +31,7 @@ Give an OCP::OptControlProb, path and gen
 Output:
 out::OptControlSolution
 """
-function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen::Vector{Bool}, N::Int64; linear = true)
+function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen_MILP::Vector{Bool}, N::Int64; linear = true)
     myModel = Model(Ipopt.Optimizer)
     set_silent(myModel)
     
@@ -82,7 +82,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         # nodei = path[timei-1]
         if linear
             @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[timei-1]-C[timei-1])   #simple linear constraints....
-            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
+            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[timei-1])
             # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         else
@@ -91,7 +91,8 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
             # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         end
-        noise_i = get_noise_i(timei, noise_intervals)
+        time = (timei-1)*dt
+        noise_i = get_noise_i(time, noise_intervals)
         @constraint(myModel, u[timei] <= noise_i)
     end
     
@@ -99,8 +100,9 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     # @objective(myModel, Max, b[n]) #maximize final battery
     # @objective(myModel, Min, sum(u[t]*Z[path[t-1],path[t]] for t=2:N)) #minumize fuel use
     @objective(myModel, Max, g[end])
-
-    set_start_value.(u,[0;gen]) 
+    
+    gen_split = u_discretized(gen_MILP, N)
+    set_start_value.(u,gen_split) 
 
     time_to_solve = @elapsed JuMP.optimize!(myModel)    
     # solution_summary(myModel)       # Provide a summary of the solution
@@ -220,7 +222,7 @@ function noiseR_to_interval_sets(noise_along_path)
             end
         end
     end
-    return intervals::Tuple{Int64, Vector{Float64}}[]
+    return intervals::Vector{Tuple{Int64, Vector{Float64}}}
 end
 
 
@@ -228,7 +230,7 @@ end
 Give a param matrix, and the MILP path.  Give new number of time points.
 Outputs vector of param values over path with new time points.
 """
-function C_time_discretized(C::SparseMatrixCSC{Float64}, path::Vector{Int64}, number_timepoints_new::Int64)
+function C_time_discretized(C::SparseMatrixCSC{Int64, Int64}, path::Vector{Int64}, number_timepoints_new::Int64)
     C_new = zeros(Float64, number_timepoints_new-1) #time[1] = 0....
     C_path = [C[path[idx-1],path[idx]] for idx in 2:length(path)]
     
@@ -243,25 +245,23 @@ function C_time_discretized(C::SparseMatrixCSC{Float64}, path::Vector{Int64}, nu
         at_now_orig_time = time_orig[time_orig .<= at_now][end]
 
         if at_now_orig_time == at_prior_orig_time #then we are in same time chunk for all time, so just get weighted chunk (normalized time)
-            idx_i = Int(at_now_orig_time*(length(path)-1)) +1 #time zero is path[1]
+            idx_i = Int(round(at_now_orig_time*(length(path)-1))) +1 #time zero is path[1]
             idx_j = idx_i + 1
             nodei, nodej = path[idx_i], path[idx_j]
-            println((nodei,nodej))
             C_new[i-1] = (Δnew/Δorig)*C[nodei, nodej]
         else #else we do a weighted average....
             t1 = at_now - at_now_orig_time
             t2 = at_now_orig_time - at_prior
             
-            idx_i = Int(at_prior_orig_time*(length(path)-1))+1
+            idx_i = Int(round(at_prior_orig_time*(length(path)-1)))+1
             idx_j = idx_i + 1
             nodei, nodej = path[idx_i], path[idx_j]
             C2bar = C[nodei, nodej]*(t2/Δorig)
 
-            idx_i = Int(at_now_orig_time*(length(path)-1)) + 1
+            idx_i = Int(round(at_now_orig_time*(length(path)-1))) + 1
             idx_j = idx_i + 1
             nodei, nodej = path[idx_i], path[idx_j]
             C1bar = C[nodei, nodej]*(t1/Δorig)
-            println((nodei,nodej))
 
 
             
@@ -276,9 +276,54 @@ function C_time_discretized(C::SparseMatrixCSC{Float64}, path::Vector{Int64}, nu
     return C_new
 end
 
+"""
+take u from MILP and split it into a bunch of time points....
+"""
+function u_discretized(u_MILP::Vector{Bool}, N::Int64)
+    #u[1] is at time[2] (inputting raw MILP gen)
+    u_new = zeros(N) #first element should remain 0
+    Δorig = 1/length(u_MILP)
+    Δnew = 1/(N-1)
+    Δnew > Δorig && error("need more time points..... does not work when new time steps larger than old (MILP) time steps")
+    time_orig = 0:Δorig:1
+    time_new = 0:Δnew:1
+    at_prior = 0
+    at_prior_orig_time = time_orig[time_orig .<= at_prior][end]
+    for i in 2:(length(time_new))-1
+        at_now = time_new[i]
+        at_now_orig_time = time_orig[time_orig .<= at_now][end]
+        
+        if at_now_orig_time == at_prior_orig_time #then we are in same time chunk for all time, so just get weighted chunk (normalized time)
+            idx_i = Int(round(at_now_orig_time*(length(u_MILP))))+1
+            u_new[i] = u_MILP[idx_i]
+        else #else we do a weighted average....
+            t1 = at_now - at_now_orig_time
+            t2 = at_now_orig_time - at_prior
+            
+            idx_j = Int(round(at_prior_orig_time*(length(u_MILP))))+1
+            u2bar = u_MILP[idx_j]
+
+
+            idx_i = Int(round(at_now_orig_time*(length(u_MILP))))+1
+            u1bar = u_MILP[idx_i]
+            u_new[i] = (u1bar*t1 + u2bar*t2)/(t1+t2)
+            println(u_new[i])
+        end
+        at_prior = at_now
+        at_prior_orig_time = time_orig[time_orig .<= at_prior][end]
+    end
+    u_new[end] = u_MILP[end]
+    return u_new::Vector{Float64}
+end
+u_MILP = rand(Bool, 10)
+
+N = 25
+
+u_new = u_discretized(u_MILP, N)
+
 function get_noise_i(timei::Float64, noise::Vector{Tuple{Int64, Vector{Float64}}})
     for noise_i in noise
-        if noise_i[2][1]<= timei <= noise_i[2][2]
+        if noise_i[2][1]< timei <= noise_i[2][2]
             return Bool(noise_i[1])
         end
     end
