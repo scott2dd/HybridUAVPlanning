@@ -124,9 +124,15 @@ algo:: string for algo type
 conn:: string for _4conn or ""
 heur:: strig for heuristic used, "" if astar
 """
+
 function MILP_to_opt_ctrl(N::Int64, k::Int64; prob::String = "euc_probs2D", algo::String = "_label", conn::String = "", heur::String = "")
     @load "Solutions\\$(prob)\\$(N)$(conn)_$(k)$(algo)$(heur)" pathL gen
-    @load "Problems\\$(prob)\\$(N)$(conn)_$(k)" euc_inst
+    if occursin("lattice", prob)
+        @load "Problems\\$(prob)\\$(N)$(conn)_$(k)" lattice_inst
+        euc_inst = lattice_inst
+    elseif occursin("euc", prob)
+        @load "Problems\\$(prob)\\$(N)$(conn)_$(k)" euc_inst
+    end
     C,Z = euc_inst.C, euc_inst.Z
     locs = euc_inst.locs
     GFlipped = euc_inst.GFlipped
