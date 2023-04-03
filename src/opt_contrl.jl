@@ -70,6 +70,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     obV = get_one_by_Vsp()
     # Pijmax = maximum(nonzeros(Z) .- nonzeros(C))*1.01
     Pijmax = maximum(Zvec .- Cvec)*1.01
+    # println("Pijmax: ", Pijmax)
     Pnormed(u,Zij,Cij) = 20*(Zij*u - Cij)/Pijmax
     Λ(b,Pij) = obV(b,abs(Pij))/obV(100,0)
 
@@ -86,8 +87,9 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
             # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         else
+            # println(Pnormed(1,Zvec[timei-1], Cvec[timei-1]))
             @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[timei-1]*mdot_normed(u[timei], Z[timei-1]))
-            @NLconstraint(myModel, b[timei] == b[timei-1] +  (Z[timei-1]*u[timei] - C[timei-1])*Λ(b[timei], Pnormed(u[timei], Z[timei-1], C[timei-1]) ) *sign(Pnormed(u[timei], Z[timei-1], C[timei-1])))
+            @NLconstraint(myModel, b[timei] == b[timei-1] +  (Zvec[timei-1]*u[timei] - Cvec[timei-1])*Λ(b[timei],  Pnormed(u[timei], Zvec[timei-1], Cvec[timei-1])) *sign(Pnormed(u[timei], Zvec[timei-1], Cvec[timei-1])))
             # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         end
@@ -102,7 +104,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     @objective(myModel, Max, g[end])
     
     gen_split = u_discretized(gen_MILP, N)
-    set_start_value.(u,gen_split) 
+    # set_start_value.(u,gen_split) 
 
     time_to_solve = @elapsed JuMP.optimize!(myModel)    
     # solution_summary(myModel)       # Provide a summary of the solution
@@ -279,6 +281,7 @@ end
 """
 take u from MILP and split it into a bunch of time points....
 """
+
 function u_discretized(u_MILP::Vector{Bool}, N::Int64)
     #u[1] is at time[2] (inputting raw MILP gen)
     u_new = zeros(N) #first element should remain 0
@@ -307,7 +310,6 @@ function u_discretized(u_MILP::Vector{Bool}, N::Int64)
             idx_i = Int(round(at_now_orig_time*(length(u_MILP))))+1
             u1bar = u_MILP[idx_i]
             u_new[i] = (u1bar*t1 + u2bar*t2)/(t1+t2)
-            println(u_new[i])
         end
         at_prior = at_now
         at_prior_orig_time = time_orig[time_orig .<= at_prior][end]
