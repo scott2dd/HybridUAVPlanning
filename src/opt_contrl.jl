@@ -31,6 +31,7 @@ Give an OCP::OptControlProb, path and gen
 Output:
 out::OptControlSolution
 """
+
 function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen_MILP::Vector{Bool}, N::Int64; linear = true)
     myModel = Model(Ipopt.Optimizer)
     set_silent(myModel)
@@ -50,6 +51,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
 
     noiseR_along_path = Float64.([!OCP.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)])
     noise_intervals = noiseR_to_interval_sets(noiseR_along_path)
+    noiseR_along_path = []
 
     @JuMP.variables(myModel, begin
         # dt ≥ 0, (start = dt_guess) # Delta T for time steps
@@ -61,7 +63,6 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     fix(b[1], b_max; force = true)  
     fix(g[1], OCP.Q0; force = true)  
     fix(u[1], 0;  force = true)  
-
 
 
     mdot_normed(uu,Zz) = (86uu^2 + 8.3*uu + 0.083)*Zz/94.383 #from http://dx.doi.org/10.1051/matecconf/201925206009
@@ -88,7 +89,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         else
             # println(Pnormed(1,Zvec[timei-1], Cvec[timei-1]))
-            @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[timei-1]*mdot_normed(u[timei], Z[timei-1]))
+            @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Zvec[timei-1]*mdot_normed(u[timei], Z[timei-1]))
             @NLconstraint(myModel, b[timei] == b[timei-1] +  (Zvec[timei-1]*u[timei] - Cvec[timei-1])*Λ(b[timei],  Pnormed(u[timei], Zvec[timei-1], Cvec[timei-1])) *sign(Pnormed(u[timei], Zvec[timei-1], Cvec[timei-1])))
             # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
@@ -96,6 +97,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         time = (timei-1)*dt
         noise_i = get_noise_i(time, noise_intervals)
         @constraint(myModel, u[timei] <= noise_i)
+        push!(noiseR_along_path, noise_i)
     end
     
     # @constraint(myModel,[timei=2:N], u[timei] <= noiseR_along_path[timei]) #noise restrictions
@@ -117,6 +119,92 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     return sol_out   
 end
 
+
+function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen_MILP::Vector{Bool}; linear = true)
+    myModel = Model(Ipopt.Optimizer)
+    set_silent(myModel)
+    
+    N = length(path) # make u[1] = 0... but need length(path) for indexing wrt path
+    tf = 1 #assume path takes 1 second
+    dt = (tf)/(N-1)
+    
+    #pull from OCP
+    C,Z,GFlipped = OCP.C, OCP.Z, OCP.GFlipped
+    # Cvec = C_time_discretized(C, path, N)
+    # Zvec = C_time_discretized(Z, path, N)
+    g_min,g_max = 0, OCP.Q0     #Bounds on the States
+    b_min, b_max = 6, 99.9
+    
+    u_min, u_max = 0, 1     # Bounds on Control
+
+    noiseR_along_path = Float64.([!OCP.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)])
+    # noise_intervals = noiseR_to_interval_sets(noiseR_along_path)
+    # noiseR_along_path = []
+
+    @JuMP.variables(myModel, begin
+        # dt ≥ 0, (start = dt_guess) # Delta T for time steps
+        g_min  ≤ g[1:N]  ≤ g_max    # fuel level, fuel is monotomically decreasing
+        b_min  ≤ b[1:N] ≤ b_max      # battery state of charge
+        u_min  ≤ u[1:N] ≤ u_max      # generator setting
+    end)
+
+    fix(b[1], b_max; force = true)  
+    fix(g[1], OCP.Q0; force = true)  
+    fix(u[1], 0;  force = true)  
+
+
+
+    mdot_normed(uu,Zz) = (86uu^2 + 8.3*uu + 0.083)*Zz/94.383 #from http://dx.doi.org/10.1051/matecconf/201925206009
+    register(myModel, :mdot_normed, 2, mdot_normed, autodiff = true)
+        
+    obV = get_one_by_Vsp()
+    Pijmax = maximum(nonzeros(Z) .- nonzeros(C))*1.01
+    # Pijmax = maximum(Zvec .- Cvec)*1.01
+    # println("Pijmax: ", Pijmax)
+    Pnormed(u,Zij,Cij) = 20*(Zij*u - Cij)/Pijmax
+    Λ(b,Pij) = obV(b,abs(Pij))/obV(100,0)
+
+    register(myModel, :Λ, 2, Λ, autodiff=true)
+    register(myModel, :Pnormed, 3, Pnormed, autodiff=true)
+    register(myModel, :sign, 1, sign, autodiff=true)
+
+    for timei in 2:N
+        # nodej = path[timei]
+        # nodei = path[timei-1]
+        if linear
+            # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[timei-1]-C[timei-1])   #simple linear constraints....
+            # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[timei-1])
+            @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
+            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
+        else
+            println(Pnormed(1,Zvec[timei-1], Cvec[timei-1]))
+            @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[timei-1]*mdot_normed(u[timei], Z[timei-1]))
+            @NLconstraint(myModel, b[timei] == b[timei-1] +  (Zvec[timei-1]*u[timei] - Cvec[timei-1])*Λ(b[timei],  Pnormed(u[timei], Zvec[timei-1], Cvec[timei-1])) *sign(Pnormed(u[timei], Zvec[timei-1], Cvec[timei-1])))
+        end
+        time = (timei-1)*dt
+        noise_i = get_noise_i(time, noise_intervals)
+        @constraint(myModel, u[timei] <= noise_i)
+        push!(noiseR_along_path, noise_i)
+    end
+    
+    # @constraint(myModel,[timei=2:N], u[timei] <= noiseR_along_path[timei]) #noise restrictions
+    # @objective(myModel, Max, b[n]) #maximize final battery
+    # @objective(myModel, Min, sum(u[t]*Z[path[t-1],path[t]] for t=2:N)) #minumize fuel use
+    @objective(myModel, Max, g[end])
+    
+    gen_split = u_discretized(gen_MILP, N)
+    # set_start_value.(u,gen_split) 
+
+    time_to_solve = @elapsed JuMP.optimize!(myModel)    
+    # solution_summary(myModel)       # Provide a summary of the solution
+    
+    # --- Store Solution from Optimal Control Search --- #
+    u_star, b_star, g_star = value.(u)[:], value.(b)[:], value.(g)[:]
+    t_star = LinRange(0,tf,N) # Store off the Time Vector
+    u_star[u_star .<= 0] .= 0
+    sol_out = OptControlSolution(OCP.locs, OCP.C, OCP.Z, OCP.F, path, u_star, t_star, b_star, g_star, noiseR_along_path, OCP.tag, time_to_solve)
+    return sol_out   
+end
 
 """
 Takes MILP instance and maps to optimal control...
