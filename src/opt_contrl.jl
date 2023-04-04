@@ -83,13 +83,13 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         # nodej = path[timei]
         # nodei = path[timei-1]
         if linear
-            @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[timei-1]-C[timei-1])   #simple linear constraints....
-            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[timei-1])
+            @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Zvec[timei-1]-Cvec[timei-1])   #simple linear constraints....
+            @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Zvec[timei-1])
             # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         else
             # println(Pnormed(1,Zvec[timei-1], Cvec[timei-1]))
-            @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Zvec[timei-1]*mdot_normed(u[timei], Z[timei-1]))
+            @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]*Zvec[timei-1]*mdot_normed(u[timei], Zvec[timei-1]))
             @NLconstraint(myModel, b[timei] == b[timei-1] +  (Zvec[timei-1]*u[timei] - Cvec[timei-1])*Λ(b[timei],  Pnormed(u[timei], Zvec[timei-1], Cvec[timei-1])) *sign(Pnormed(u[timei], Zvec[timei-1], Cvec[timei-1])))
             # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
@@ -189,7 +189,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     
     # @constraint(myModel,[timei=2:N], u[timei] <= noiseR_along_path[timei]) #noise restrictions
     # @objective(myModel, Max, b[n]) #maximize final battery
-    # @objective(myModel, Min, sum(u[t]*Z[path[t-1],path[t]] for t=2:N)) #minumize fuel use
+    # @objective(myModel, Min, sum(u[t]*path[t-1],path[t]] for t=2:N)) #minumize fuel use
     @objective(myModel, Max, g[end])
     
     gen_split = u_discretized(gen_MILP, N)
