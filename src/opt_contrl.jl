@@ -75,7 +75,8 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     Pnormed(u,Zij,Cij) = 20*(Zij*u - Cij)/Pijmax
     Λ(b,Pij) = obV(b,abs(Pij))/obV(100,0)
 
-    register(myModel, :Λ, 2, Λ, autodiff=true  register(myModel, :Pnormed, 3, Pnormed, autodiff=true)
+    register(myModel, :Λ, 2, Λ, autodiff=true)
+    register(myModel, :Pnormed, 3, Pnormed, autodiff=true)
     register(myModel, :sign, 1, sign, autodiff=true)    
     for timei in 2:N
         if linear
