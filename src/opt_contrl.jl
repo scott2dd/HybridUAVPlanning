@@ -80,12 +80,13 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     register(myModel, :sign, 1, sign, autodiff=true)    
     for timei in 2:N
         if linear
-            @constraint(myModel, b[timei] == b[timei-1]+(u[timei]/100*Zvec[timei-1]-Cvec[timei-1])*100/(2*OCP.Bmax))   #simple linear constraints....
             @constraint(myModel, g[timei] == g[timei-1] - u[timei]/100*Zvec[timei-1])
+            @constraint(myModel, b[timei] == b[timei-1]+(u[timei]/100*Zvec[timei-1]-Cvec[timei-1])*100/(2*OCP.Bmax))   #simple linear constraints....
             # @constraint(myModel, b[timei] == b[timei-1]+u[timei]*Z[nodei,nodej]-C[nodei,nodej])   #simple linear constraints....
             # @constraint(myModel, g[timei] == g[timei-1] - u[timei]*Z[nodei,nodej])
         else
-            @NLconstraint(myModel, g[timei] == g[timei-1] - u[timei]/100*Zvec[timei-1]*mdot_normed(u[timei]/100, Zvec[timei-1]))
+            @NLconstraint(myModel, g[timei] == g[timei-1] - mdot_normed(u[timei]/100, Zvec[timei-1]) )
+            # @NLconstraint(myModel,   g[timei] == g[timei-1] - u[timei]/100*Zvec[timei-1])
             @NLconstraint(myModel, b[timei] == b[timei-1] + (Zvec[timei-1]*u[timei]/100 - Cvec[timei-1])*Λ(b[timei-1],  Pnormed(u[timei]/100, Zvec[timei-1], Cvec[timei-1]))*100/(2*OCP.Bmax))
             # @NLconstraint(myModel, b[timei] == b[timei-1] +  
             #     (Zvec[timei-1]*u[timei]/100 - Cvec[timei-1])
