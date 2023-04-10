@@ -58,7 +58,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         g_min  ≤ g[1:N]  ≤ g_max    # fuel level, fuel is monotomically decreasing
         b_min  ≤ b[1:N] ≤ b_max      # battery state of charge
         u_min  ≤ u[1:N] ≤ u_max      # generator setting
-    endi8o)
+    end)
 
     fix(b[1], b_max; force = true)  
     fix(g[1], g_max; force = true)  
