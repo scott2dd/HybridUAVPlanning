@@ -14,9 +14,10 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     edge_index(e::Edge) = edgemap[e]
     nE = ne(g)
     edge_colors = [colorant"gray" for i in 1:nE]
-    node_colors = [colorant"gray", colorant"cyan", colorant"magenta", colorant"indianred3", colorant"magenta"]
+    node_colors = [colorant"lightgray", colorant"cyan", colorant"magenta", colorant"lightcoral", colorant"magenta"]
     node_labels = ones(Int, N)
-    nodesize = ones(N)
+    nodesize = 0.01*ones(N)
+    edgelinewidth = 0.25*ones(nE)
     if !isempty(path)
         edgelist = collect(edges(g))
         edgemap = Dict{Edge, Int}()
@@ -29,7 +30,12 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
             edgemap[e] = i
             edgemap[reverse(e)] = i
             src, dst = e.src, e.dst
-            if Gsummed[src] >= 1 || Gsummed[dst] >= 1
+            if euc_inst.GFlipped[src,dst] == true
+                edge_colors[i] = node_colors[4]
+            elseif euc_inst.GFlipped[src,dst] == false
+                edge_colors[i] = node_colors[1]
+            elseif Gsummed[src] >= 1 || Gsummed[dst] >= 1
+                println("here")
                 edge_colors[i] = colorant"red"
                 if Gsummed[src] >= 1
                     node_labels[src] = 4
@@ -65,7 +71,12 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
             edgemap[e] = i
             edgemap[reverse(e)] = i
             src, dst = e.src, e.dst
-            if Gsummed[src] >= 1 || Gsummed[dst] >= 1
+            if euc_inst.GFlipped[src,dst] == true
+                edge_colors[i] = node_colors[4]
+            elseif euc_inst.GFlipped[src,dst] == false
+                edge_colors[i] = node_colors[1]
+            elseif Gsummed[src] >= 1 || Gsummed[dst] >= 1
+                println("here")
                 edge_colors[i] = colorant"red"
                 if Gsummed[src] >= 1
                     node_labels[src] = 4
@@ -86,12 +97,10 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     nodefillc2 = node_colors[node_labels]
     # path_plt = gplot(g, x_locs, y_locs, edgestrokec = edge_colors, nodefillc = nodefillc2)
     
-    plt = gplot(g, euc_inst.locs[:,1], euc_inst.locs[:,2], edgestrokec = edge_colors, nodefillc = nodefillc2, nodesize=nodesize)
+    plt = gplot(g, euc_inst.locs[:,1], euc_inst.locs[:,2], edgestrokec = edge_colors, nodefillc = nodefillc2, nodesize=nodesize, edgelinewidth = edgelinewidth, NODESIZE = maximum(nodesize), EDGELINEWIDTH = maximum(edgelinewidth))
     return plt
-
-    #also get a legend object.... to add to graph plot
-
 end
+
 function plot_euc_graph_solution(euc_inst::EucGraph; label_strings::Vector{String}, label_units::Vector{String} = [""], label_vals::Matrix{Float64}, label_edge_idxs::Vector{Int}, path::Vector{Int64} = [], gen::Vector{Int64} = [], color_ends::Bool = true)
     #make Graph() then just graph plot
     set_default_plot_size(20cm, 20cm)

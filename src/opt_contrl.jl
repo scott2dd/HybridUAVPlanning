@@ -58,7 +58,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
         g_min  ≤ g[1:N]  ≤ g_max    # fuel level, fuel is monotomically decreasing
         b_min  ≤ b[1:N] ≤ b_max      # battery state of charge
         u_min  ≤ u[1:N] ≤ u_max      # generator setting
-    end)
+    endi8o)
 
     fix(b[1], b_max; force = true)  
     fix(g[1], g_max; force = true)  
@@ -75,8 +75,7 @@ function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen
     Pnormed(u,Zij,Cij) = 20*(Zij*u - Cij)/Pijmax
     Λ(b,Pij) = obV(b,abs(Pij))/obV(100,0)
 
-    register(myModel, :Λ, 2, Λ, autodiff=true)
-    register(myModel, :Pnormed, 3, Pnormed, autodiff=true)
+    register(myModel, :Λ, 2, Λ, autodiff=true  register(myModel, :Pnormed, 3, Pnormed, autodiff=true)
     register(myModel, :sign, 1, sign, autodiff=true)    
     for timei in 2:N
         if linear
@@ -329,11 +328,6 @@ function u_discretized(u_MILP::Vector{Bool}, N::Int64)
     u_new[end] = u_MILP[end]
     return u_new::Vector{Float64}
 end
-u_MILP = rand(Bool, 10)
-
-N = 25
-
-u_new = u_discretized(u_MILP, N)
 
 function get_noise_i(timei::Float64, noise::Vector{Tuple{Int64, Vector{Float64}}})
     for noise_i in noise
@@ -342,6 +336,42 @@ function get_noise_i(timei::Float64, noise::Vector{Tuple{Int64, Vector{Float64}}
         end
     end
     return 0
+end
+
+function path_discretized(locs_x::Vector{Float64}, N::Int64)
+    #u[1] is at time[2] (inputting raw MILP gen)
+    x_new = zeros(N) #first element should remain 0
+    Δorig = 1/length(u_MILP)
+    Δnew = 1/(N-1)
+    
+    time_orig = 0:Δorig:1
+    time_new = 0:Δnew:1
+    at_prior = 0
+    at_prior_orig_time = time_orig[time_orig .<= at_prior][end]
+    for i in 2:(length(time_new))-1
+        at_now = time_new[i]
+        at_now_orig_time = time_orig[time_orig .<= at_now][end]
+        
+        if at_now_orig_time == at_prior_orig_time #then we are in same time chunk for all time, so just get weighted chunk (normalized time)
+            idx_i = Int(round(at_now_orig_time*(length(u_MILP))))+1
+            u_new[i] = u_MILP[idx_i]
+        else #else we do a weighted average....
+            t1 = at_now - at_now_orig_time
+            t2 = at_now_orig_time - at_prior
+            
+            idx_j = Int(round(at_prior_orig_time*(length(u_MILP))))+1
+            u2bar = u_MILP[idx_j]
+
+
+            idx_i = Int(round(at_now_orig_time*(length(u_MILP))))+1
+            u1bar = u_MILP[idx_i]
+            u_new[i] = (u1bar*t1 + u2bar*t2)/(t1+t2)
+        end
+        at_prior = at_now
+        at_prior_orig_time = time_orig[time_orig .<= at_prior][end]
+    end
+    u_new[end] = u_MILP[end]
+    return u_new::Vector{Float64}
 end
 
 # function solve_gen_optimal_control(OCP::OptControlProb, path::Vector{Int64}, gen_MILP::Vector{Bool}; linear = true)
