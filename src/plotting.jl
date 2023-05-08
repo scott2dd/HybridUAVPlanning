@@ -16,8 +16,8 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     edge_colors = [colorant"gray" for i in 1:nE]
     node_colors = [colorant"lightgray", colorant"cyan", colorant"magenta", colorant"lightcoral", colorant"magenta"]
     node_labels = ones(Int, N)
-    nodesize = 0.01*ones(N)
-    edgelinewidth = 0.25*ones(nE)
+    nodesize = 0.0008*ones(N)
+    edgelinewidth = 0.125*ones(nE)
     if !isempty(path)
         edgelist = collect(edges(g))
         edgemap = Dict{Edge, Int}()
@@ -34,32 +34,33 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
                 edge_colors[i] = node_colors[4]
             elseif euc_inst.GFlipped[src,dst] == false
                 edge_colors[i] = node_colors[1]
-            elseif Gsummed[src] >= 1 || Gsummed[dst] >= 1
-                println("here")
-                edge_colors[i] = colorant"red"
-                if Gsummed[src] >= 1
-                    node_labels[src] = 4
-                end
-                if Gsummed[dst] >= 1
-                    node_labels[dst] = 4
-                end
+            # elseif Gsummed[src] >= 1 || Gsummed[dst] >= 1
+            #     println("here")
+            #     edge_colors[i] = colorant"red"
+            #     if Gsummed[src] >= 1
+            #         node_labels[src] = 4
+            #     end
+            #     if Gsummed[dst] >= 1
+            #         node_labels[dst] = 4
+            #     end
             end
 
         end
         for k in 2:length(path)
             i = path[k-1]
             j = path[k]
-            edge_idx = edge_index(Edge(i,j))
-            nodesize[i] = 2
-            nodesize[j] = 2
+            edge_idx = edgemap[Edge(i,j)]
+            edgelinewidth[edge_idx] = 0.5
+            # nodesize[i] = 0.011
+            # nodesize[j] = 0.011
             if gen[k-1] == 0
                 edge_colors[edge_idx] = node_colors[2]
-                k == 2 && (node_labels[i] = 2)
-                node_labels[j] = 2
+                # k == 2 && (node_labels[i] = 2)
+                # node_labels[j] = 2
             elseif gen[k-1] == 1
                 edge_colors[edge_idx] = node_colors[3]
                 k == 2 && (node_labels[i] = 3)
-                node_labels[j] = 3
+                # node_labels[j] = 3
             end
         end
         
