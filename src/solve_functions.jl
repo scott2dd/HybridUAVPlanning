@@ -61,7 +61,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
         for k = 1:10
             print("  k = $(k): ")
             @load "Problems\\$(prob)\\$(n)$(conn)_$(k)" euc_inst 
-            tdp = @elapsed cost, pathL, gen = algof(euc_inst)
+            tdp = @elapsed cost, pathL, gen = algof(euc_inst, heur = heur)
             println(" $(tdp)")
             @save "Solutions\\$(prob)\\$(n)$(conn)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(times_vec, tdp)
@@ -142,7 +142,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
         for k = 1:10
             print("  k = $(k): ")
             @load "Problems\\$(prob)\\$(n)_$(k)" lattice_inst
-            tdp = @elapsed cost, pathL, gen = algof(lattice_inst)
+            tdp = @elapsed cost, pathL, gen = algof(lattice_inst, heur = heur)
             println(" $(tdp) ")
             @save "Solutions\\$(prob)\\$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(times_vec, tdp)
