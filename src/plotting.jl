@@ -333,7 +333,6 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
         Nvec = Vector(5:nEND)
     end
 
-    println(nEND)
     times = zeros(length(Nvec),K)
     avg_times = zeros(length(Nvec))
     
