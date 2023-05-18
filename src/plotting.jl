@@ -310,8 +310,60 @@ function plot_hybrid_soln(mapdef, path, genY)
 
 end
 
-
 function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
+    #changing this from orig so we pull the END problem size, don't have to worry about loading old solutions from prior runs that went farther accidently....
+    nEND = Int64
+    try #stinky hack for not having saved nENDS for runs to the complete end....
+        @load "Solutions\\END_$(prob_title)$(algo)$(heur)" n
+        nEND = n + 0
+    catch #stinky hack... catching this and just assuming we solved to the end....
+        if prob_type == "euc"
+            nEND = 20000
+        elseif prob_type == "lattice"
+            nEND = 50
+        end
+    end
+    if prob_type == "euc"
+        if nEND > 2000
+        Nvec = [50:500:2000; 2000:1000:nEND]
+        else
+            Nvec = Vector(50:500:nEND)
+        end
+    elseif prob_type == "lattice"
+        Nvec = Vector(5:nEND)
+    end
+
+    println(nEND)
+    times = zeros(length(Nvec),K)
+    avg_times = zeros(length(Nvec))
+    
+    nidx = 0
+    for n in Nvec
+        nidx += 1
+        for k = 1:K
+            try
+                if prob == "MILP"
+                    @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)" tMILP
+                    time_i = tMILP
+                else
+                    @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)$(heur)" tdp
+                    time_i = tdp
+                end
+                times[nidx,k] = time_i
+            catch #if here, then we are at the end of saved prolems... return up to the prior Nidx....
+                #now should never be here... as we bound Nvec to last complete soln set.... return 0....
+                println("why are we here? - Douglas")
+                return 0 #times[1:nidx-1, :], avg_times[1:nidx-1], Nvec[1:nidx-1]
+            end
+        end
+        avg_times[nidx] = mean(times[nidx,:])
+    end
+
+    return times, avg_times, Nvec
+end
+
+
+function get_sol_vec_old(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
     if prob_type == "euc"
         Nvec = [50:500:2000; 2000:1000:20000]
     elseif prob_type == "lattice"
