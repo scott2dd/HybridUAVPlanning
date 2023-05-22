@@ -8,6 +8,8 @@ Input:  algo::"node" or "label:
 
         Need to incorporate a time limit to terminate... if problems are taking too long we just end it early (don't go to end of Nvec)
         Then save last size we finished at....
+        
+        adding multithreading (solving individual problems in parallel.....)
 """
 
 function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "astar", tlim = 3600, Nstart = 50)
@@ -58,11 +60,11 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
         printstyled("N = $(n) \n", color = :light_green)
         times_vec = Float64[]
         Zbreak_count = 0
-        for k = 1:10
-            print("  k = $(k): ")
+        Threads.@threads for k = 1:10
+            println("  $(k) ")
             @load "Problems\\$(prob)\\$(n)$(conn)_$(k)" euc_inst 
             tdp = @elapsed cost, pathL, gen = algof(euc_inst, heur = heur)
-            println(" $(tdp)")
+            # println(" $(tdp)")
             @save "Solutions\\$(prob)\\$(n)$(conn)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(times_vec, tdp)
             cost == 0 && (Zbreak_count += 1)
@@ -79,6 +81,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
         end
+        println(" ||  mTTS (s) : $(mean(times_vec)) ")
     end
     printstyled("\n SOLVED --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_green)
     n = Nvecwhole[end]
@@ -95,7 +98,9 @@ Input:  algo::"node" or "label:
 
         Time limit to terminate... if problems are taking too long we just end it early (don't go to end of Nvec)
         Save last size we finished at....
+        adding threading support....
 """
+
 function solve_lattice(;algo::String = "label", dims::String="2D", heur::String = "astar", tlim = 3600, Nstart = 5)
     Nvec = 5:50
     Nvecwhole = 5:50
@@ -139,11 +144,11 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
         printstyled("N = $(n) \n", color = :light_green)
         times_vec = Float64[]
         Zbreak_count = 0
-        for k = 1:10
-            print("  k = $(k): ")
+        Threads.@threads for k = 1:10
+            print(" $(k) ")
             @load "Problems\\$(prob)\\$(n)_$(k)" lattice_inst
             tdp = @elapsed cost, pathL, gen = algof(lattice_inst, heur = heur)
-            println(" $(tdp) ")
+            # println(" $(tdp) ")
             @save "Solutions\\$(prob)\\$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(times_vec, tdp)
             cost == 0 && (Zbreak_count += 1)
@@ -160,6 +165,8 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
         end
+        println(" ||  mTTS (s) : $(mean(times_vec)) ")
+
     end
     printstyled("\n SOLVED --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
     n = Nvecwhole[end]
