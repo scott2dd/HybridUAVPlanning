@@ -348,7 +348,7 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
         for k = 1:K
             try
                 if prob == "MILP"
-                    println("Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)")
+                    # println("Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)")
                     @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)" tMILP
                     time_i = tMILP
                 else
