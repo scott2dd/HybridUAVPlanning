@@ -314,8 +314,14 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
     #changing this from orig so we pull the END problem size, don't have to worry about loading old solutions from prior runs that went farther accidently....
     nEND = Int64
     try #stinky hack for not having saved nENDS for runs to the complete end....
-        @load "Solutions\\END_$(prob_title)$(algo)$(heur)" n
-        nEND = n + 0
+        # if prob_title == "euc_probs_2D"
+            # println("Solutions\\END_euc_probs2D_$(algo)$(heur)")
+            # @load "Solutions\\END_euc_probs2D_$(algo)$(heur)" n
+            # nEND = n + 0    
+        # else
+            @load "Solutions\\END_$(prob_title)$(algo)$(heur)" n
+            nEND = n + 0
+        # end
     catch #stinky hack... catching this and just assuming we solved to the end....
         if prob_type == "euc"
             nEND = 20000
@@ -342,6 +348,7 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
         for k = 1:K
             try
                 if prob == "MILP"
+                    println("Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)")
                     @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)" tMILP
                     time_i = tMILP
                 else
@@ -350,9 +357,7 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
                 end
                 times[nidx,k] = time_i
             catch #if here, then we are at the end of saved prolems... return up to the prior Nidx....
-                #now should never be here... as we bound Nvec to last complete soln set.... return 0....
-                println("why are we here? - Douglas")
-                return 0 #times[1:nidx-1, :], avg_times[1:nidx-1], Nvec[1:nidx-1]
+                return times[1:nidx-1, :], avg_times[1:nidx-1], Nvec[1:nidx-1]
             end
         end
         avg_times[nidx] = mean(times[nidx,:])
