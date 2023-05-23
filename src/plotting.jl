@@ -14,7 +14,7 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     edge_index(e::Edge) = edgemap[e]
     nE = ne(g)
     edge_colors = [colorant"gray" for i in 1:nE]
-    node_colors = [colorant"lightgray", colorant"cyan", colorant"magenta", colorant"lightcoral", colorant"magenta"]
+    node_colors = [colorant"darkgray", colorant"cyan", colorant"magenta", colorant"lightcoral", colorant"magenta"]
     node_labels = ones(Int, N)
     nodesize = 0.0008*ones(N)
     edgelinewidth = 0.125*ones(nE)
@@ -68,6 +68,7 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
         edgelist = collect(edges(g))
         edgemap = Dict{Edge, Int}()
         Gsummed = sum(euc_inst.GFlipped, dims = 1)
+        edgelinewidth = 0.25*ones(nE)
         for (i,e) in enumerate(edgelist)
             edgemap[e] = i
             edgemap[reverse(e)] = i
