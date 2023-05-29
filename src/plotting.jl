@@ -14,9 +14,10 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     edge_index(e::Edge) = edgemap[e]
     nE = ne(g)
     edge_colors = [colorant"gray" for i in 1:nE]
-    node_colors = [colorant"gray", colorant"cyan", colorant"magenta", colorant"indianred3", colorant"magenta"]
+    node_colors = [colorant"darkgray", colorant"cyan", colorant"magenta", colorant"lightcoral", colorant"magenta"]
     node_labels = ones(Int, N)
-    nodesize = ones(N)
+    nodesize = 0.0008*ones(N)
+    edgelinewidth = 0.125*ones(nE)
     if !isempty(path)
         edgelist = collect(edges(g))
         edgemap = Dict{Edge, Int}()
@@ -29,31 +30,37 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
             edgemap[e] = i
             edgemap[reverse(e)] = i
             src, dst = e.src, e.dst
-            if Gsummed[src] >= 1 || Gsummed[dst] >= 1
-                edge_colors[i] = colorant"red"
-                if Gsummed[src] >= 1
-                    node_labels[src] = 4
-                end
-                if Gsummed[dst] >= 1
-                    node_labels[dst] = 4
-                end
+            if euc_inst.GFlipped[src,dst] == true
+                edge_colors[i] = node_colors[4]
+            elseif euc_inst.GFlipped[src,dst] == false
+                edge_colors[i] = node_colors[1]
+            # elseif Gsummed[src] >= 1 || Gsummed[dst] >= 1
+            #     println("here")
+            #     edge_colors[i] = colorant"red"
+            #     if Gsummed[src] >= 1
+            #         node_labels[src] = 4
+            #     end
+            #     if Gsummed[dst] >= 1
+            #         node_labels[dst] = 4
+            #     end
             end
 
         end
         for k in 2:length(path)
             i = path[k-1]
             j = path[k]
-            edge_idx = edge_index(Edge(i,j))
-            nodesize[i] = 2
-            nodesize[j] = 2
+            edge_idx = edgemap[Edge(i,j)]
+            edgelinewidth[edge_idx] = 0.5
+            # nodesize[i] = 0.011
+            # nodesize[j] = 0.011
             if gen[k-1] == 0
                 edge_colors[edge_idx] = node_colors[2]
-                k == 2 && (node_labels[i] = 2)
-                node_labels[j] = 2
+                # k == 2 && (node_labels[i] = 2)
+                # node_labels[j] = 2
             elseif gen[k-1] == 1
                 edge_colors[edge_idx] = node_colors[3]
                 k == 2 && (node_labels[i] = 3)
-                node_labels[j] = 3
+                # node_labels[j] = 3
             end
         end
         
@@ -61,11 +68,17 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
         edgelist = collect(edges(g))
         edgemap = Dict{Edge, Int}()
         Gsummed = sum(euc_inst.GFlipped, dims = 1)
+        edgelinewidth = 0.25*ones(nE)
         for (i,e) in enumerate(edgelist)
             edgemap[e] = i
             edgemap[reverse(e)] = i
             src, dst = e.src, e.dst
-            if Gsummed[src] >= 1 || Gsummed[dst] >= 1
+            if euc_inst.GFlipped[src,dst] == true
+                edge_colors[i] = node_colors[4]
+            elseif euc_inst.GFlipped[src,dst] == false
+                edge_colors[i] = node_colors[1]
+            elseif Gsummed[src] >= 1 || Gsummed[dst] >= 1
+                println("here")
                 edge_colors[i] = colorant"red"
                 if Gsummed[src] >= 1
                     node_labels[src] = 4
@@ -86,12 +99,10 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     nodefillc2 = node_colors[node_labels]
     # path_plt = gplot(g, x_locs, y_locs, edgestrokec = edge_colors, nodefillc = nodefillc2)
     
-    plt = gplot(g, euc_inst.locs[:,1], euc_inst.locs[:,2], edgestrokec = edge_colors, nodefillc = nodefillc2, nodesize=nodesize)
+    plt = gplot(g, euc_inst.locs[:,1], euc_inst.locs[:,2], edgestrokec = edge_colors, nodefillc = nodefillc2, nodesize=nodesize, edgelinewidth = edgelinewidth, NODESIZE = maximum(nodesize), EDGELINEWIDTH = maximum(edgelinewidth))
     return plt
-
-    #also get a legend object.... to add to graph plot
-
 end
+
 function plot_euc_graph_solution(euc_inst::EucGraph; label_strings::Vector{String}, label_units::Vector{String} = [""], label_vals::Matrix{Float64}, label_edge_idxs::Vector{Int}, path::Vector{Int64} = [], gen::Vector{Int64} = [], color_ends::Bool = true)
     #make Graph() then just graph plot
     set_default_plot_size(20cm, 20cm)
@@ -191,9 +202,26 @@ function plot_euc_graph_solution(euc_inst::EucGraph; label_strings::Vector{Strin
 
 end
 
+function get_stacked_plots(Nvecs, times, avg_times; labels = ["NODE", "LABEL"], colors = ["red", "grey"], plot_sizes = [20cm, 30cm])
+    xmax = maximum([Nvecs[1][end], Nvecs[2][end]])
+    avg_plt = plot(
+        layer(x = Nvecs[1], y = avg_times[1], Geom.line, Geom.point, Theme(default_color = colors[1])),
+        layer(x = Nvecs[2], y = avg_times[2], Geom.line, Geom.point, Theme(default_color = colors[2])),
+        Scale.y_log10,
+        Scale.x_continuous(format= :plain, maxvalue = xmax),
+        Guide.xlabel(""),
+        Guide.ylabel(" Mean Time to Solve (s)"),
+        Theme(key_position = :top),
+        Guide.manual_color_key("", [labels[1], labels[2]], [colors[1], colors[2]]))
 
+    bplt1 = get_boxplot_plt(Nvecs[1], times[1], color = colors[1], xlabel = "", xmax = xmax) 
+    bplt2 = get_boxplot_plt(Nvecs[2], times[2], color = colors[2], xlabel = "Number of Nodes", xmax = xmax) 
+    set_default_plot_size(plot_sizes[1], plot_sizes[2])
+    stacked = vstack(avg_plt, bplt1, bplt2)
+    return stacked
+end
 
-function get_boxplot_plt(Nvec::Vector{Int64}, times::Matrix{Float64}; color::String = "blue", xlabel::String="", xmax::Float64 = float(Nvec[end]))
+function get_boxplot_plt(Nvec::Vector{Int64}, times::Matrix{Float64}; color::String = "blue", xlabel::String="", xmax::Int64 = Nvec[end])
     K = size(times,2)
     instance = collect(1:K)
 
@@ -215,6 +243,7 @@ function get_boxplot_plt(Nvec::Vector{Int64}, times::Matrix{Float64}; color::Str
                 Theme(default_color = color, highlight_width = 0pt, middle_color = fcolor, middle_width = 0.5pt))
     return plt
 end
+
 function fcolor(color)
     return colorant"white"
 end
@@ -282,27 +311,93 @@ function plot_hybrid_soln(mapdef, path, genY)
 
 end
 
+function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
+    #changing this from orig so we pull the END problem size, don't have to worry about loading old solutions from prior runs that went farther accidently....
+    nEND = Int64
+    try #stinky hack for not having saved nENDS for runs to the complete end....
+        # if prob_title == "euc_probs_2D"
+            # println("Solutions\\END_euc_probs2D_$(algo)$(heur)")
+            # @load "Solutions\\END_euc_probs2D_$(algo)$(heur)" n
+            # nEND = n + 0    
+        # else
+            @load "Solutions\\END_$(prob_title)$(algo)$(heur)" n
+            nEND = n + 0
+        # end
+    catch #stinky hack... catching this and just assuming we solved to the end....
+        if prob_type == "euc"
+            nEND = 20000
+        elseif prob_type == "lattice"
+            nEND = 50
+        end
+    end
+    if prob_type == "euc"
+        if nEND > 2000
+        Nvec = [50:500:2000; 2000:1000:nEND]
+        else
+            Nvec = Vector(50:500:nEND)
+        end
+    elseif prob_type == "lattice"
+        Nvec = Vector(5:nEND)
+    end
 
-function get_sol_vec(Nvec, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
     times = zeros(length(Nvec),K)
     avg_times = zeros(length(Nvec))
+    
     nidx = 0
     for n in Nvec
         nidx += 1
         for k = 1:K
-            if prob == "MILP"
-                @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)" tMILP
-                time_i = tMILP
-            else
-                @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)$(heur)" tdp
-                time_i = tdp
+            try
+                if prob == "MILP"
+                    # println("Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)")
+                    @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)" tMILP
+                    time_i = tMILP
+                else
+                    @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)$(heur)" tdp
+                    time_i = tdp
+                end
+                times[nidx,k] = time_i
+            catch #if here, then we are at the end of saved prolems... return up to the prior Nidx....
+                return times[1:nidx-1, :], avg_times[1:nidx-1], Nvec[1:nidx-1]
             end
-            times[nidx,k] = time_i
         end
         avg_times[nidx] = mean(times[nidx,:])
     end
 
-    return times, avg_times
+    return times, avg_times, Nvec
+end
+
+
+function get_sol_vec_old(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
+    if prob_type == "euc"
+        Nvec = [50:500:2000; 2000:1000:20000]
+    elseif prob_type == "lattice"
+        Nvec = Vector(5:50)
+    end
+    times = zeros(length(Nvec),K)
+    avg_times = zeros(length(Nvec))
+
+    nidx = 0
+    for n in Nvec
+        nidx += 1
+        for k = 1:K
+            try
+                if prob == "MILP"
+                    @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)" tMILP
+                    time_i = tMILP
+                else
+                    @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)$(heur)" tdp
+                    time_i = tdp
+                end
+                times[nidx,k] = time_i
+            catch #if here, then we are at the end of saved prolems... return up to the prior Nidx....
+                return times[1:nidx-1, :], avg_times[1:nidx-1], Nvec[1:nidx-1]
+            end
+        end
+        avg_times[nidx] = mean(times[nidx,:])
+    end
+
+    return times, avg_times, Nvec
 end
 
 
@@ -325,3 +420,4 @@ function get_avg_layer(Ncec, avg_times; color_in = "grey")
     layer_out = layer(x = Nvec, y = avg_times, Geom.point, Theme(default_color = color_in))
     return layer_out
 end
+

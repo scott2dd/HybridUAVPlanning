@@ -339,7 +339,7 @@ function euc_dist(j, E, Dim, anchor)
     end
 end
 
-function make_graph(euc_inst)
+function make_graph(euc_inst::EucGraphInt)
     A = euc_inst.Alist
     N = length(A)
     g = SimpleGraph(N)

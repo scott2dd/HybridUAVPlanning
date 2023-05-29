@@ -1,6 +1,6 @@
-name = "TestPkg"
-uuid = "37709266-af22-4333-a778-c4caa1a76ded"
-authors = ["drew <you@example.com> and contributors"]
+name = "HybridUAVPlanning"
+uuid = "eb2b2960-c339-11ed-0bc3-37cdc9f3a80e"
+authors = ["drew <scott2dd@mail.uc.edu> and contributors"]
 version = "0.1.0"
 
 [deps]
