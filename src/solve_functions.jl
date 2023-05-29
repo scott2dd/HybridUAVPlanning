@@ -61,7 +61,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
         times_vec = Float64[]
         Zbreak_count = 0
         Threads.@threads for k = 1:10
-            println("  $(k) ")
+            print("  $(k) ")
             @load "Problems\\$(prob)\\$(n)$(conn)_$(k)" euc_inst 
             tdp = @elapsed cost, pathL, gen = algof(euc_inst, heur = heur)
             # println(" $(tdp)")
