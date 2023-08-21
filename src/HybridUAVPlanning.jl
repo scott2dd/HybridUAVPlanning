@@ -3,6 +3,7 @@ module HybridUAVPlanning
 using LinearAlgebra
 using DataStructures
 using Graphs
+using SimpleWeightedGraphs
 using JLD2
 using Compose
 using GLM

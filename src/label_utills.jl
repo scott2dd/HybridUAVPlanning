@@ -342,13 +342,11 @@ end
 function make_graph(euc_inst::EucGraphInt)
     A = euc_inst.Alist
     N = length(A)
-    g = SimpleGraph(N)
+    g = SimpleWeightedGraph(N)
     weights = euc_inst.C
     for i in 1:N
         for j in A[i]
-            add_edge!(g, i, j)
-            set_weights!(g, i, j, weights[i,j])
-            # add_edge!(g, j, i)
+            add_edge!(g, i, j, weights[i,j])
         end
     end
     return g
