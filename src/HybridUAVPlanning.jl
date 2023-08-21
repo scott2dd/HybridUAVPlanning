@@ -54,7 +54,7 @@ export EucGraphInt
 export get_path
 export get_gen
 
-
+export make_graph
 export plot_euc_graph
 export plot_euc_graph_solution
 
