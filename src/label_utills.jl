@@ -342,7 +342,7 @@ end
 function make_graph(euc_inst::EucGraphInt)
     A = euc_inst.Alist
     N = length(A)
-    g = SimpleWeightedGraph(N)
+    g = SimpleWeightedDiGraph(N)
     weights = euc_inst.C
     for i in 1:N
         for j in A[i]
