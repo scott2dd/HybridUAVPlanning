@@ -62,7 +62,7 @@ function get_heur_label(Fvec::Vector{Float64}, graph, C, E, heur_astar)
     function heur_label!(i)
         #if needed, run astar.  then, add all nodes in path to Fvec. return only f cost for this label, while altering all of Fvec
         if isnan(Fvec[i])
-            astar_out = a_star(graph, i, E, C, heur_astar)
+            astar_out = a_star(graph, i, E, C, heur_astar) 
             if isempty(astar_out)
                 path_list = [i] 
                 printstyled("No path to goal!!", color=:light_red)

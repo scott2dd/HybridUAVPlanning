@@ -54,6 +54,7 @@ export EucGraphInt
 
 export get_path
 export get_gen
+export astar_proc
 
 export make_graph
 export plot_euc_graph
