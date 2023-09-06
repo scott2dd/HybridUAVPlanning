@@ -38,7 +38,6 @@ include("struct_defs.jl")
 include("label_utills.jl")
 include("label_label_sel.jl")
 include("label_node_sel.jl")
-include("label_temporal.jl")
 include("plotting.jl")
 include("battery.jl")
 include("opt_contrl.jl")
@@ -48,7 +47,6 @@ include("solve_functions.jl")
 
 export hybrid_label_selection
 export hybrid_node_selection
-export hybrid_label_temporal
 # export MILP_hybrid
 
 export EucGraphInt
