@@ -352,6 +352,18 @@ function make_graph(euc_inst::EucGraphInt)
     return g
 end
 
+function make_graph(euc_inst::EucGraphInt, weighted::Bool)
+    A = euc_inst.Alist
+    N = length(A)
+    g = SimpleGraph(N)
+    for i in 1:N
+        for j in A[i]
+            add_edge!(g, i, j)
+        end
+    end
+    return g
+end
+
 function astar_proc(path, C)
     LB_vec = zeros(length(path) + 1)
     path_list = zeros(Int, length(path) + 1)

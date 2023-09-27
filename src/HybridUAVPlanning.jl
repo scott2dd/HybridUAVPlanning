@@ -59,7 +59,8 @@ export astar_proc
 export make_graph
 export plot_euc_graph
 export plot_euc_graph_solution
-
+export plot_MAPF
+export gen_plot
 
 export get_sol_vec
 export get_pathlength_vec
