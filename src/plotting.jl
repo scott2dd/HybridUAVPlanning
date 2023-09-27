@@ -6,10 +6,65 @@
 # green     - fuel level 
 # sienna    - battery level (SOC)
 
+function gen_plot(path, gen, euc_inst::EucGraphInt; max_time = 0, legendbool = true, uavi = 0)
+    G = [!euc_inst.GFlipped[path[idx-1],path[idx]] for idx in 2:length(path)] #1 less than time_vec... 
+    
+    time = Vector(0:length(gen))
+    timerep = repeat(time, inner = 2)
+    popfirst!(timerep)
+    pop!(timerep)
+    genrep = repeat(gen, inner = 2)
+    
+    #normalize time vecs
+
+    if max_time == 0
+        time = time./time[end]
+        timerep = timerep./timerep[end]
+    else #need to normalize wrt to maximum time (0, maxhere/maxmax)
+        time = time./max_time
+        timerep = timerep./max_time
+    end
+    #else, we need to set xlims
+    ylabel = "gen∈{0,1}"
+    uavi != 0 && (ylabel = "UAV$(uavi)")
+    if legendbool
+        plt_gen = plot(
+                    layer(x= timerep, y = genrep, Geom.line, Theme(default_color = "black")), 
+                    layer(xmin=time[1:end-1], xmax = time[2:end].+ 0, Geom.vband, color = G), #max gen as ribbons....
+                    Scale.color_discrete_manual("white", "lightcoral"),
+                    Guide.colorkey(title="", labels = [""]),
+                    # Guide.manual_color_key("",["Noise Resricted   ", "Gen Throttle"],["lightcoral", "black"]),
+                    Guide.xlabel("Time (normalized)"),
+                    Guide.ylabel(ylabel),
+                    Guide.yticks(ticks = [0,1]),
+                    Coord.cartesian(xmin = 0, xmax = 1),
+                    # Theme(key_position=:top)
+        )
+    elseif !legendbool #if not bottom, remove legend and xlabel
+        plt_gen = plot(
+                    layer(x= timerep, y = genrep, Geom.line, Theme(default_color = "black")), 
+                    layer(xmin=time[1:end-1], xmax = time[2:end].+ 0, Geom.vband, color = G), #max gen as ribbons....
+                    Scale.color_discrete_manual("white", "lightcoral"),
+                    Guide.colorkey(title="", labels = [""]),
+                    # Guide.manual_color_key("",["Noise Resricted   ", "Gen Throttle"],["lightcoral", "black"]),
+                    Guide.xlabel(""),
+                    Guide.xticks(ticks = []),
+                    Guide.ylabel(ylabel),
+                    Guide.yticks(ticks = [0,1]),
+                    Coord.cartesian(xmin = 0, xmax = 1),
+                    # Theme(key_position=:top)
+        )
+    end
+    return plt_gen
+
+end
+   
+
+
 function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     #make Graph() then just graph plot
     set_default_plot_size(20cm, 20cm)
-    g = make_graph(euc_inst)
+    g = make_graph(euc_inst, false)
     N = length(euc_inst.Alist)
     edge_index(e::Edge) = edgemap[e]
     nE = ne(g)
@@ -103,10 +158,72 @@ function plot_euc_graph(euc_inst; path = [], gen = [], color_ends = true)
     return plt
 end
 
+function plot_MAPF(euc_inst, paths; color_ends = true, NR = false)
+    #for each path/gen, plot the solution....
+    #make Graph() then just graph plot
+    set_default_plot_size(20cm, 20cm)
+    g = make_graph(euc_inst, false)
+    N = length(euc_inst.Alist)
+    edge_index(e::Edge) = edgemap[e]
+    nE = ne(g)
+    edge_colors = [colorant"gray" for i in 1:nE]
+    node_colors = [colorant"darkgray", colorant"cyan", colorant"magenta", colorant"red", colorant"magenta"]
+    path_colors = [colorant"cyan", colorant"green", colorant"magenta", colorant"orange", colorant"yellow", colorant"sienna"]
+    node_labels = ones(Int, N)
+    nodesize = 0.0008*ones(N)
+    edgelinewidth = 0.125*ones(nE)
+    agent_colors = fill(colorant"black", length(paths))
+    
+    edgelist = collect(edges(g))
+    edgemap = Dict{Edge, Int}()
+    
+    for (i,e) in enumerate(edgelist)
+        edgemap[e] = i
+        edgemap[reverse(e)] = i
+    end
+    Gsummed = sum(euc_inst.GFlipped, dims = 1)
+    for (i,e) in enumerate(edgelist)
+        edgemap[e] = i
+        edgemap[reverse(e)] = i
+        src, dst = e.src, e.dst
+        if euc_inst.GFlipped[src,dst] == true && NR == true
+            edge_colors[i] = node_colors[4]
+        elseif euc_inst.GFlipped[src,dst] == false
+            edge_colors[i] = node_colors[1]
+        end
+
+    end
+    for agent_idx in 1:length(paths)
+        path = paths[agent_idx]
+        gen = zeros(length(path)-1)
+        if agent_idx <= 6
+            agent_color = path_colors[agent_idx]
+        else 
+            #pick random color
+            agent_color = rand(path_colors)
+        end
+        for k in 2:length(path)
+            i = path[k-1]
+            j = path[k]
+            edge_idx = edgemap[Edge(i,j)]
+            edgelinewidth[edge_idx] = 0.5
+            edge_colors[edge_idx] = agent_color
+            if color_ends
+                nodesize[path[1]] = 0.011
+                nodesize[path[end]] = 0.011
+            end            
+        end
+    end
+    nodefillc2 = node_colors[node_labels]
+    plt = gplot(g, euc_inst.locs[:,1], euc_inst.locs[:,2], edgestrokec = edge_colors, nodefillc = nodefillc2, nodesize=nodesize, edgelinewidth = edgelinewidth, NODESIZE = maximum(nodesize), EDGELINEWIDTH = maximum(edgelinewidth))
+    return plt
+end
+
+
 function plot_euc_graph_solution(euc_inst::EucGraph; label_strings::Vector{String}, label_units::Vector{String} = [""], label_vals::Matrix{Float64}, label_edge_idxs::Vector{Int}, path::Vector{Int64} = [], gen::Vector{Int64} = [], color_ends::Bool = true)
     #make Graph() then just graph plot
     set_default_plot_size(20cm, 20cm)
-    g = make_graph(euc_inst)
+    g = make_graph(euc_inst, false)
     N = length(euc_inst.Alist)
     edge_index(e::Edge) = edgemap[e]
     nE = ne(g)
@@ -253,7 +370,7 @@ end
 # using Plots, PyPlot
 function plot_euc_3D(euc_inst; path =[], gen = [])
     set_default_plot_size(90cm, 90cm)
-    g = make_graph(euc_inst)
+    g = make_graph(euc_inst, false)
     N = length(euc_inst.Alist)
     locs = euc_inst.locs
 
