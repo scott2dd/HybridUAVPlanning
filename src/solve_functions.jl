@@ -167,7 +167,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
         println(" ||  mTTS (s) : $(mean(times_vec)) ")
 
     end
-    printstyled("\n SOLVED --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_red)
+    printstyled("\n SOLVED --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_green)
     n = Nvecwhole[end]
     @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
 
