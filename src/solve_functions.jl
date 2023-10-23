@@ -144,7 +144,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
         times_vec = Float64[]
         Zbreak_count = 0
         Threads.@threads for k = 1:10
-            # print(" $(k) ")
+            print(" $(k) ")
             @load "Problems\\$(prob)\\$(n)_$(k)" lattice_inst
             tdp = @elapsed cost, pathL, gen = algof(lattice_inst, heur = heur)
             # println(" $(tdp) ")
