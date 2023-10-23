@@ -167,8 +167,8 @@ function plot_MAPF(euc_inst, paths; color_ends = true, NR = false)
     edge_index(e::Edge) = edgemap[e]
     nE = ne(g)
     edge_colors = [colorant"gray" for i in 1:nE]
-    node_colors = [colorant"darkgray", colorant"cyan", colorant"magenta", colorant"red", colorant"magenta"]
-    path_colors = [colorant"cyan", colorant"green", colorant"magenta", colorant"orange", colorant"yellow", colorant"sienna"]
+    node_colors = [colorant"darkgray", colorant"cyan", colorant"magenta", colorant"red", colorant"magenta", colorant"black"]
+    path_colors = [colorant"cyan", colorant"green", colorant"magenta", colorant"orange", colorant"chartreuse1", colorant"sienna"]
     node_labels = ones(Int, N)
     nodesize = 0.0008*ones(N)
     edgelinewidth = 0.125*ones(nE)
@@ -209,13 +209,15 @@ function plot_MAPF(euc_inst, paths; color_ends = true, NR = false)
             edgelinewidth[edge_idx] = 0.5
             edge_colors[edge_idx] = agent_color
             if color_ends
-                nodesize[path[1]] = 0.011
-                nodesize[path[end]] = 0.011
+                nodesize[path[1]] = 0.033
+                nodesize[path[end]] = 0.033
+                node_labels[path[1]] = 6
+                node_labels[path[end]] = 4
             end            
         end
     end
     nodefillc2 = node_colors[node_labels]
-    plt = gplot(g, euc_inst.locs[:,1], euc_inst.locs[:,2], edgestrokec = edge_colors, nodefillc = nodefillc2, nodesize=nodesize, edgelinewidth = edgelinewidth, NODESIZE = maximum(nodesize), EDGELINEWIDTH = maximum(edgelinewidth))
+    plt = gplot(g, euc_inst.locs[:,1], euc_inst.locs[:,2], edgestrokec = edge_colors, nodefillc = nodefillc2, nodesize=nodesize, edgelinewidth = edgelinewidth, NODESIZE = maximum(nodesize), EDGELINEWIDTH = maximum(edgelinewidth), )
     return plt
 end
 
@@ -431,25 +433,25 @@ end
 function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
     #changing this from orig so we pull the END problem size, don't have to worry about loading old solutions from prior runs that went farther accidently....
     nEND = Int64
-    try #stinky hack for not having saved nENDS for runs to the complete end....
+    # try #stinky hack for not having saved nENDS for runs to the complete end....
         # if prob_title == "euc_probs_2D"
             # println("Solutions\\END_euc_probs2D_$(algo)$(heur)")
             # @load "Solutions\\END_euc_probs2D_$(algo)$(heur)" n
             # nEND = n + 0    
         # else
-            @load "Solutions\\END_$(prob_title)$(algo)$(heur)" n
-            nEND = n + 0
+            # @load "Solutions\\END_$(prob_title)$(algo)$(heur)" n
+            # nEND = n + 0
         # end
-    catch #stinky hack... catching this and just assuming we solved to the end....
-        if prob_type == "euc"
-            nEND = 20000
-        elseif prob_type == "lattice"
-            nEND = 50
-        end
-    end
+    # catch #stinky hack... catching this and just assuming we solved to the end....
+        # if prob_type == "euc"
+            # nEND = 20000
+        # elseif prob_type == "lattice"
+            # nEND = 50
+        # end
+    # end
     if prob_type == "euc"
         if nEND > 2000
-        Nvec = [50:500:2000; 2000:1000:nEND]
+            Nvec = [50:500:2000; 2000:1000:nEND]
         else
             Nvec = Vector(50:500:nEND)
         end

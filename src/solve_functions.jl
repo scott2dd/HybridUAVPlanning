@@ -88,7 +88,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
 end 
 
 """
-Function to solve euclidean instances, need to specify type.
+Function to solve lattice instances, need to specify type.
 Input:  algo::"node" or "label:
         dims:: "2D" or "3D"
         heur:: "astar" or "euc"
@@ -144,17 +144,17 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
         times_vec = Float64[]
         Zbreak_count = 0
         Threads.@threads for k = 1:10
-            print(" $(k) ")
+            # print(" $(k) ")
             @load "Problems\\$(prob)\\$(n)_$(k)" lattice_inst
             tdp = @elapsed cost, pathL, gen = algof(lattice_inst, heur = heur)
             # println(" $(tdp) ")
             @save "Solutions\\$(prob)\\$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(times_vec, tdp)
             cost == 0 && (Zbreak_count += 1)
-            Zbreak_count > 3 && (nidx -= 1;  break) 
+            Zbreak_count > 3 && (nidx -= 1; break) 
         end
         if mean(times_vec) > tlim || Zbreak_count > 3
-            printstyled("\n STOPPED EARLY || Euclidean $(dims) || h(i): $(heur) || $(algo) \n", color=:light_red) 
+            printstyled("\n STOPPED EARLY || Lattice $(dims) || h(i): $(heur) || $(algo) \n", color=:light_red) 
             if Zbreak_count > 3
                 nwholeidx = findall(x->x==n, Nvecwhole)[1] - 1
             elseif mean(times_vec) > tlim 
