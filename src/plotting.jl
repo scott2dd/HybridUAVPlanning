@@ -433,22 +433,22 @@ end
 function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
     #changing this from orig so we pull the END problem size, don't have to worry about loading old solutions from prior runs that went farther accidently....
     nEND = Int64
-    # try #stinky hack for not having saved nENDS for runs to the complete end....
+    try #stinky hack for not having saved nENDS for runs to the complete end....
         # if prob_title == "euc_probs_2D"
-            # println("Solutions\\END_euc_probs2D_$(algo)$(heur)")
-            # @load "Solutions\\END_euc_probs2D_$(algo)$(heur)" n
-            # nEND = n + 0    
+        #     # println("Solutions\\END_euc_probs2D_$(algo)$(heur)")
+        #     @load "Solutions\\END_euc_probs2D_$(algo)$(heur)" n
+        #     nEND = n + 0    
         # else
-            # @load "Solutions\\END_$(prob_title)$(algo)$(heur)" n
-            # nEND = n + 0
+        @load "Solutions\\END_$(prob_title)$(algo)$(heur)" n
+        nEND = n + 0
         # end
-    # catch #stinky hack... catching this and just assuming we solved to the end....
-        # if prob_type == "euc"
-            # nEND = 20000
-        # elseif prob_type == "lattice"
-            # nEND = 50
-        # end
-    # end
+    catch #stinky hack... catching this and just assuming we solved to the end....
+        if prob_type == "euc"
+            nEND = 20000
+        elseif prob_type == "lattice"
+            nEND = 50
+        end
+    end
     if prob_type == "euc"
         if nEND > 2000
             Nvec = [50:500:2000; 2000:1000:nEND]

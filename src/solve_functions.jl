@@ -56,7 +56,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     printstyled("\n Solving Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) \n ", color=:light_green)
     for n in Nvec
         nidx += 1
-        printstyled("N = $(n) \n", color = :light_green)
+        printstyled("N = $(n) ||", color = :light_green)
         times_vec = Float64[]
         Zbreak_count = 0
         Threads.@threads for k = 1:10
@@ -80,7 +80,8 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
         end
-        println(" ||  mTTS (s) : $(mean(times_vec)) ")
+        meantts = round(mean(times_vec), digits = 2)
+        println(" ||  mTTS (s) : $(meantts) ")
     end
     printstyled("\n SOLVED --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_green)
     n = Nvecwhole[end]
@@ -140,7 +141,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
     
     printstyled("\n Solving Lattice $(dims) Problems  || h(i): $(heur) || $(algo) \n ", color=:light_green)
     for n in Nvec
-        printstyled("N = $(n) \n", color = :light_green)
+        printstyled("N = $(n) ||", color = :light_green)
         times_vec = Float64[]
         Zbreak_count = 0
         Threads.@threads for k = 1:10
@@ -164,8 +165,8 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
             @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
         end
-        println(" ||  mTTS (s) : $(mean(times_vec)) ")
-
+        meantts = round(mean(times_vec), digits = 2)
+        println(" ||  mTTS (s) : $(meantts) ")
     end
     printstyled("\n SOLVED --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_green)
     n = Nvecwhole[end]
