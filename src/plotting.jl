@@ -28,9 +28,10 @@ function gen_plot(path, gen, euc_inst::EucGraphInt; max_time = 0, legendbool = t
     ylabel = "gen∈{0,1}"
     uavi != 0 && (ylabel = "UAV$(uavi)")
     if legendbool
+        set_default_plot_size(11cm, 6cm)
         plt_gen = plot(
                     layer(x= timerep, y = genrep, Geom.line, Theme(default_color = "black")), 
-                    layer(xmin=time[1:end-1], xmax = time[2:end].+ 0, Geom.vband, color = G), #max gen as ribbons....
+                    layer(xmin=time[1:end-1], xmax = time[2:end].+ 0.01, Geom.vband, color = G), #max gen as ribbons....
                     Scale.color_discrete_manual("white", "lightcoral"),
                     Guide.colorkey(title="", labels = [""]),
                     # Guide.manual_color_key("",["Noise Resricted   ", "Gen Throttle"],["lightcoral", "black"]),
@@ -41,6 +42,7 @@ function gen_plot(path, gen, euc_inst::EucGraphInt; max_time = 0, legendbool = t
                     # Theme(key_position=:top)
         )
     elseif !legendbool #if not bottom, remove legend and xlabel
+        set_default_plot_size(20cm, 5cm)
         plt_gen = plot(
                     layer(x= timerep, y = genrep, Geom.line, Theme(default_color = "black")), 
                     layer(xmin=time[1:end-1], xmax = time[2:end].+ 0, Geom.vband, color = G), #max gen as ribbons....
@@ -452,8 +454,14 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
     if prob_type == "euc"
         if nEND > 2000
             Nvec = [50:500:2000; 2000:1000:nEND]
+            if prob_title == "connectivity_expr"
+                Nvec = [50:1000:2000; 2000:2000:20000]
+            end
         else
             Nvec = Vector(50:500:nEND)
+            if prob_title == "connectivity_expr"
+                Nvec = Vector(50:1000:nEND)
+            end
         end
     elseif prob_type == "lattice"
         Nvec = Vector(5:nEND)
@@ -471,6 +479,9 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
                     # println("Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)")
                     @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)" tMILP
                     time_i = tMILP
+                elseif prob_title == "connectivity_expr"
+                    @load "Solutions/$(prob_title)/$(n)_$(k)$(conn)$(algo)$(heur)" tdp
+                    time_i = tdp
                 else
                     @load "Solutions/$(prob_title)/$(n)$(conn)_$(k)$(algo)$(heur)" tdp
                     time_i = tdp
