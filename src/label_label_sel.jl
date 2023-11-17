@@ -28,7 +28,7 @@ function hybrid_label_selection(def::EucGraphInt; heur::String = "astar")
     Dim = def.locs 
     
     N = length(Alist)
-    graph = make_graph(def)
+    graph = make_graph(def, false)
     Fvec = fill(2^63 - 1, N)
     heur_astar = get_heur_astar(E, locs, Fvec)
     heur_astar(S)

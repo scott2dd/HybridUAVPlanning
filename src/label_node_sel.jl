@@ -23,8 +23,8 @@ function hybrid_node_selection(def::EucGraphInt; heur::String = "astar")
     locs = def.locs
     
     N = length(Alist)
-    graph = make_graph(def)
-    Fvec = fill(2^63-1, N)
+    graph = make_graph(def, false)
+    Fvec = fill(2^63 - 1, N)
     heur_astar = get_heur_astar(E, locs, Fvec)
     heur_astar(S)
     if heur == "astar"
@@ -35,7 +35,7 @@ function hybrid_node_selection(def::EucGraphInt; heur::String = "astar")
         printstyled("invalid heuristic... breaking\n", color=:light_red)
         return 0,[0], Bool.([0])
     end
-    if heur_label!(S) == 2^63-1     
+    if heur_label!(S) == 2^63 - 1     
         return -1,[0], Bool.([0])
     end
     node_queue = fill(Inf, N) # keep track of minimum candidate label
