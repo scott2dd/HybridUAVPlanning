@@ -63,6 +63,7 @@ export plot_MAPF
 export gen_plot
 
 export get_sol_vec
+export get_sol_vec_conn_expr
 export get_pathlength_vec
 export get_avg_layer
 export get_boxplot_plt 

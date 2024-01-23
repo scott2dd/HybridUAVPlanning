@@ -497,6 +497,30 @@ function get_sol_vec(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc
     return times, avg_times, Nvec
 end
 
+function get_sol_vec_conn_expr(conn::Int64, algo::String = "_label")
+#write code to load solutions iterating Nvec.  If doesn't exist, assume we didnt solve
+    Nvec = [50:1000:2000; 2000:2000:20000]
+    times = zeros(length(Nvec), 10)
+    avg_times = zeros(length(Nvec))
+
+    nidx = 1
+    for n in Nvec
+        for k = 1:10
+            try
+                @load "Solutions/connectivity_expr/$(n)_$(k)_$(conn)conn$(algo)" tdp;
+                time_i = tdp
+                times[nidx,k] = time_i
+            catch #if here, then we are at the end of saved prolems... return up to the prior Nidx....
+                return times[1:nidx-1, :], avg_times[1:nidx-1], Nvec[1:nidx-1]
+            end
+        end
+        avg_times[nidx] = mean(times[nidx,:])
+        nidx += 1
+    end
+
+
+    return times, avg_times, Nvec
+end
 
 function get_sol_vec_old(prob_type, prob_title; K = 10, conn = "_4conn", type = "euc", algo = "", prob = "DP", heur = "" )
     if prob_type == "euc"
