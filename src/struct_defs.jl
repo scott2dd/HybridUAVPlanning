@@ -1,5 +1,29 @@
 ###########################################
 ## 1: Data Structs
+
+
+abstract type Label end
+
+@kwdef struct MyLabel <: Label
+    gcost::Float64
+    fcost::Float64
+    hcost::Float64
+    node_idx::Int64
+    prior_node_idx::Int64
+    _hold_came_from_prior::Int64
+    came_from_idx::Int64
+    pathlength::Int64
+    _hold_gen_track_prior::Int64
+    gentrack_idx::Int64
+    gen_bool::Int64
+    batt_state::Float64
+    gen_state::Float64
+end
+
+Base.isless(a::Label, b::Label) = (a.fcost, a.gcost) < (b.fcost, a.gcost) #tie breaker is gcost.
+#note, for lattice2D, gcost seems to be best tie breaker.
+#TODO did not test for lattice 3D or eucs.
+
 struct ProblemDef
     S::Int64
     E::Int64
