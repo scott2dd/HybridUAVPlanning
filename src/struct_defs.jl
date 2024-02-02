@@ -1,11 +1,7 @@
-###########################################
-## 1: Data Structs
-
-
 abstract type Label end
 
 @kwdef struct MyLabel <: Label
-    gcost::Float64
+    gcost::Int64
     fcost::Float64
     hcost::Float64
     node_idx::Int64
@@ -16,13 +12,14 @@ abstract type Label end
     _hold_gen_track_prior::Int64
     gentrack_idx::Int64
     gen_bool::Int64
-    batt_state::Float64
-    gen_state::Float64
+    batt_state::Int64
+    gen_state::Int64
 end
 
-Base.isless(a::Label, b::Label) = (a.fcost, a.gcost) < (b.fcost, a.gcost) #tie breaker is gcost.
+# Base.isless(a::Label, b::Label) = (a.fcost, a.gcost) < (b.fcost, a.gcost) #tie breaker is gcost.
 #note, for lattice2D, gcost seems to be best tie breaker.
-#TODO did not test for lattice 3D or eucs.
+#TODO did not test for lattice 3D or eucs:
+Base.isless(a::Label, b::Label) = (a.fcost, -a.batt_state, a.gcost) < (b.fcost, -b.batt_state, a.gcost) #tie breaker is gcost.
 
 struct ProblemDef
     S::Int64
