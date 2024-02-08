@@ -8,9 +8,7 @@ function hybrid_label_selection(def::EucGraphInt; heur::String="astar")
     Bmax = Bstart
     SC = def.StartCost
     SC = 0
-    anchor = def.anchor_list  #if a grid problem, this is zeros(N)
     locs = def.locs
-    Dim = def.locs
 
     N = length(Alist)
     graph = make_graph(def, false)
@@ -47,21 +45,20 @@ function hybrid_label_selection(def::EucGraphInt; heur::String="astar")
     Q = MutableBinaryMinHeap{MyLabel}()
     push!(Q, label_init)
 
-    P = [MyLabel[] for k = 1:N] #tuple of vectors of labels.... may change to hashmap???????? or set.... 
+    P = [Set{AbbreviatedLabel}() for k = 1:N] #vector of sets of labels
 
     came_from = [Tuple{Int64, Int64}[] for _ in 1:N]
     push!(came_from[start], (0, 9999)) #S is start... so we just add a dummy entry to [S]
     gen_track = [Tuple{Int64,Int64}[] for _ in 1:N]  #data struct to track genertor patterns 
     z = 0  #will not have a path larger than N
-    while true 
+    while true
         isempty(Q) && (printstyled("Q empty, Z  = $z... \n", color=:light_cyan); break)
 
         #pull minimum cost label....
         labelN = pop!(Q)
         nodei = labelN.node_idx
         GenPrior = 1 #label_treated[7]
-        # P[nodei] = vcat(P[nodei], reshape(label_treated, (1, 9)))
-        push!(P[nodei], labelN)
+        push!(P[nodei], abbreviated_label(labelN))
 
         if nodei == goal
             opt_cost = labelN.gcost
@@ -97,7 +94,7 @@ function hybrid_label_selection(def::EucGraphInt; heur::String="astar")
                     batt_state = new_batt_state,
                     gen_state =  new_gen_state
                 )
-                if EFF_heap(Q, temp_new_label) && EFF_P(P, temp_new_label)
+                if EFF_heap(Q, temp_new_label) && EFF_P(P[nodej], abbreviated_label(temp_new_label))
                     new_label = update_path_and_gen!(temp_new_label, came_from, gen_track)
                     push!(Q, new_label)
                 end
@@ -122,7 +119,7 @@ function hybrid_label_selection(def::EucGraphInt; heur::String="astar")
                     gen_state = labelN.gen_state
                 )
 
-                if EFF_heap(Q, temp_new_label) && EFF_P(P, temp_new_label)
+                if EFF_heap(Q, temp_new_label) && EFF_P(P[nodej], abbreviated_label(temp_new_label))
                     new_label = update_path_and_gen!(temp_new_label, came_from, gen_track)
                     push!(Q, new_label)
                 end
