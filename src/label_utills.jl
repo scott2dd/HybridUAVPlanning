@@ -74,6 +74,38 @@ function update_path_and_gen!(new_label::L, came_from::Vector{Vector{Tuple{Int64
     return label_updated
 end
 
+function abbreviated_label(label::Label)
+    return AbbreviatedLabel(
+        gcost = label.gcost,
+        batt_state = label.batt_state,
+        gen_state = label.gen_state
+    )
+end
+
+#sort with alternate ordeirng, by fcost, then -batt_state, then -gen_state:
+function sort_labels!(labels::Vector{L}) where L<:Label
+    sort!(labels, by = x -> (x.fcost, -x.batt_state, -x.gen_state))
+end
+
+function merge_3D(X::Vector{L}, Y::Vector{L}) where L<:Label #O(N^2 / 2 + N / 2 + NlogN)  -> slightly better than O(N^2)
+    Mtemp = vcat(X, Y)
+    sort!(Mtemp, by = x -> (x.fcost, -x.batt_state, -x.gen_state)) #sorts by 1st el then 2nd el then 3rd el....
+    boolv = ones(Bool, length(Mtemp))
+    #now go through each element 
+    for i in eachindex(Mtemp)
+        label = Mtemp[i]
+        for ii in 1:(i-1)
+            boolv[ii] == 0 && continue #if already dommed don't need to compare
+            if dom_min(Mtemp[ii], label)
+                boolv[i] = 0
+                break
+            end
+        end
+    end
+    M_out = Mtemp[boolv]
+    return M_out
+end
+
 
 function get_path(label::Vector{Int64}, came_from::Vector{Vector{Vector{Int64}}}, start::Int64)
     #get path from recursive data struct
@@ -233,6 +265,13 @@ function merge_3D(X::Vector{Vector{Int64}}, Y::Vector{Vector{Int64}}) #O(N^2 / 2
     return M_out
 end
 
+function dom_min(X::L, Y::L) where L<:Label
+    #returns true if X >> Y, should be used when X and Y have batt and gen vals *-1
+    bool = false
+    (X.gcost <= Y.gcost && X.batt_state <= Y.batt_state  && X.gen_state <= Y.gen_state) && (bool = true)  
+    return bool 
+end
+
 function dom_min(X::Vector{Int64},Y::Vector{Int64})
     #returns true if X >> Y
     bool = false
@@ -245,6 +284,14 @@ function dom(X::Vector{Int64},Y::Vector{Int64})
     (X[1] <= Y[1] && X[2] >= Y[2]  && X[3] >= Y[3]) && (bool = true)
     return bool
 end
+
+function dom(X::L, Y::L) where L<:Label
+    #returns true if X >> Y
+    bool = false
+    (X.gcost <= Y.gcost && X.batt_state >= Y.batt_state && X.gen_state >= Y.gen_state) && (bool = true)
+    return bool
+end
+
 function EFF_list(Γ::Vector{Vector{Int64}}, new::Vector{Int64})  #should not need this, but may be faster if we have less? like a merge sort?
     EFF_bool = true
     for i in 1:length(Γ)  #γ in Γ
@@ -255,6 +302,15 @@ function EFF_list(Γ::Vector{Vector{Int64}}, new::Vector{Int64})  #should not ne
         end
     end
     return EFF_bool
+end
+
+function EFF_list(current_labels::Vector{L}, newlabel::L) where L <: Label
+    for labeli in current_labels
+        if dom(labeli, newlabel)
+            return false
+        end
+    end
+    return true
 end
 
 
@@ -271,14 +327,14 @@ function EFF_heap(Q::MutableBinaryMinHeap{L}, label_new::L) where {L<:Label}
 end
 
 #P should be vector of vector of labels
-function EFF_P(P::Vector{Vector{L}}, label_new::L) where {L<:Label}
-    #loop through P_i and return 0 if dominated or
-    i = label_new.node_idx
-    isempty(P[i]) && (return true)
-    for label_closed in P[i]
-        (label_new.gcost >= label_closed.gcost && label_new.batt_state <= label_closed.batt_state && label_new.gen_state <= label_closed.gen_state) && (return false) #then return false
+function EFF_P(Pi::Set{AbbreviatedLabel}, label_new::AbbreviatedLabel)
+    #loop through P_i and return 0 if dominated (or in the set directly which is dominated)
+    isempty(Pi) && return true
+    label_new ∈ Pi  && return false #AbbreviatedLabel needed for this check to make sense
+    for labelc in Pi
+        (label_new.gcost >= labelc.gcost && label_new.batt_state <= labelc.batt_state && label_new.gen_state <= labelc.gen_state) && return false
     end
-    return true #otherwise, return true.... Can we use a dictionary???????
+    return true #otherwise, return true.... Can we use a dictionary??????? We used a set... should be hashed? 
 end
 
 
