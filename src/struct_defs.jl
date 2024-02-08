@@ -16,6 +16,12 @@ abstract type Label end
     gen_state::Int64
 end
 
+@kwdef struct AbbreviatedLabel
+    gcost::Int64
+    batt_state::Int64
+    gen_state::Int64
+end
+
 # Base.isless(a::Label, b::Label) = (a.fcost, a.gcost) < (b.fcost, a.gcost) #tie breaker is gcost.
 #note, for lattice2D, gcost seems to be best tie breaker.
 #TODO did not test for lattice 3D or eucs:
