@@ -1,6 +1,7 @@
 module HybridUAVPlanning
 
 using LinearAlgebra
+using Parameters
 using DataStructures
 using Graphs
 using SimpleWeightedGraphs
@@ -45,16 +46,24 @@ include("solve_functions.jl")
 # include("MILP_definition3D.jl")  #later will update with correct CPLEX
 
 
+export hybrid_label_selection_dumb
 export hybrid_label_selection
 export hybrid_node_selection
+export hybrid_node_selection_dumb
 # export MILP_hybrid
 
 export EucGraphInt
+export Label
+export AbbreviatedLabel
 
 
 export get_path
 export get_gen
 export astar_proc
+export update_path_and_gen!
+export EFF_heap
+export EFF_P
+export abbreviated_label
 
 export make_graph
 export plot_euc_graph
