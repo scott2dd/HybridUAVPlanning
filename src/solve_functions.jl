@@ -17,7 +17,6 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     nidx = 0
     Nstart > 1900 && (nidx = findall(x->x==Nstart, Nvec)[1] - 1; Nvec = Nstart:1000:20000)
 
-    println("HERE********************")
     if algo == "label"
         algof = hybrid_label_selection
         algo_tag = "_label"
