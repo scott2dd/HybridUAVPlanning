@@ -17,7 +17,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     nidx = 0
     Nstart > 1900 && (nidx = findall(x->x==Nstart, Nvec)[1] - 1; Nvec = Nstart:1000:20000)
 
-
+    println("HERE********************")
     if algo == "label"
         algof = hybrid_label_selection
         algo_tag = "_label"
@@ -29,8 +29,9 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     end
 
     if dims == "2D"
-        conn == 0 && (conn = ""; prob = "euc_probs2D") 
-        if conn != 0
+        if conn == 0 
+            conn = ""; prob = "euc_probs2D"
+        elseif conn != 0
             conn = "_$(conn)conn"
             prob = "connectivity_expr"
             Nvec = [50:1000:2000; 2000:2000:20000]
@@ -55,9 +56,9 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
 
     #run 1 to compile
     if prob == "connectivity_expr"
-        @load "Problems\\$(prob)\\50_1$(conn)" euc_inst
+        @load "Problems/$(prob)/50_1$(conn)" euc_inst
     else
-        @load "Problems\\$(prob)\\50$(conn)_1" euc_inst
+        @load "Problems/$(prob)/50$(conn)_1" euc_inst
     end
     tdp = @elapsed cost, path, gen = algof(euc_inst, heur = heur)
     
@@ -71,15 +72,15 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
         Threads.@threads for k = 1:10
             print(" $(k)")
             if prob == "connectivity_expr"
-                @load "Problems\\$(prob)\\$(n)_$(k)$(conn)" euc_inst
+                @load "Problems/$(prob)/$(n)_$(k)$(conn)" euc_inst
             else
-                @load "Problems\\$(prob)\\$(n)$(conn)_$(k)" euc_inst
+                @load "Problems/$(prob)/$(n)$(conn)_$(k)" euc_inst
             end
             tdp = @elapsed cost, pathL, gen = algof(euc_inst, heur = heur)
             if prob == "connectivity_expr"
-                @save "Solutions\\$(prob)\\$(n)_$(k)$(conn)$(algo_tag)$(heur_tag)" tdp cost pathL gen
+                @save "Solutions/$(prob)/$(n)_$(k)$(conn)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             else
-                @save "Solutions\\$(prob)\\$(n)$(conn)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
+                @save "Solutions/$(prob)/$(n)$(conn)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             end
             push!(times_vec, tdp)
             cost == 0 && (Zbreak_count += 1)
@@ -94,7 +95,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
                 nwholeidx = findall(x->x==n, Nvecwhole)[1] 
             end
             n = Nvecwhole[nwholeidx]
-            @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
+            @save "Solutions/END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
         end
         meantts = round(mean(times_vec), digits = 2)
@@ -102,7 +103,7 @@ function solve_euc(;algo::String = "label", dims::String="2D", heur::String = "a
     end
     printstyled("\n SOLVED --- Euclidean $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_green)
     n = Nvecwhole[end]
-    @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n
+    @save "Solutions/END_$(prob)$(algo_tag)$(heur_tag)" n
 end 
 
 """
@@ -152,7 +153,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
     end
 
     #run 1 to compile
-    @load "Problems\\$(prob)\\5_1" lattice_inst
+    @load "Problems/$(prob)/5_1" lattice_inst
     tdp = @elapsed cost, path, gen = algof(lattice_inst, heur = heur)
     
     printstyled("\n Solving Lattice $(dims) Problems  || h(i): $(heur) || $(algo) \n ", color=:light_green)
@@ -162,10 +163,10 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
         Zbreak_count = 0
         Threads.@threads for k = 1:10
             print(" $(k) ")
-            @load "Problems\\$(prob)\\$(n)_$(k)" lattice_inst
+            @load "Problems/$(prob)/$(n)_$(k)" lattice_inst
             tdp = @elapsed cost, pathL, gen = algof(lattice_inst, heur = heur)
             # println(" $(tdp) ")
-            @save "Solutions\\$(prob)\\$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
+            @save "Solutions/$(prob)/$(n)_$(k)$(algo_tag)$(heur_tag)" tdp cost pathL gen
             push!(times_vec, tdp)
             cost == 0 && (Zbreak_count += 1)
             Zbreak_count > 3 && (nidx -= 1; break) 
@@ -178,7 +179,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
                 nwholeidx = findall(x->x==n, Nvecwhole)[1] 
             end
             n = Nvecwhole[nwholeidx]
-            @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
+            @save "Solutions/END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
             return 0
         end
         meantts = round(mean(times_vec), digits = 2)
@@ -186,7 +187,7 @@ function solve_lattice(;algo::String = "label", dims::String="2D", heur::String 
     end
     printstyled("\n SOLVED --- Lattice $(dims) Problems  || h(i): $(heur) || $(algo) --- \n", color=:light_green)
     n = Nvecwhole[end]
-    @save "Solutions\\END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
+    @save "Solutions/END_$(prob)$(algo_tag)$(heur_tag)" n #save where we ended early.....
 
 end 
 
