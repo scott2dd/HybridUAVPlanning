@@ -5,6 +5,8 @@ Both discrete version (MILP and labeling algos) and optimal control functions.
 
 See HybridUAVPlanning.jl for exported functions and structs.  
 
+Scripts to run the function here are given in https://github.com/scott2dd/NRHFworking
+
 
 
 
